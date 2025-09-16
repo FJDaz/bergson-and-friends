@@ -406,10 +406,12 @@ Réponse (en tant que {philosophe.capitalize()}):"""
             with torch.no_grad():
                 outputs = self.model.generate(
                     **inputs,
-                    max_new_tokens=150,
+                    max_new_tokens=300,  # Augmenté pour réponses plus complètes
                     do_sample=True,
                     temperature=0.7,
-                    pad_token_id=self.tokenizer.eos_token_id
+                    pad_token_id=self.tokenizer.eos_token_id,
+                    eos_token_id=self.tokenizer.eos_token_id,
+                    early_stopping=False  # Evite arrêt prématuré
                 )
             
             response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
