@@ -17,6 +17,19 @@ import faiss
 import numpy as np
 
 # =============================================================================
+# 0. CHARGEMENT CSS PERSONNALISÉ
+# =============================================================================
+
+def load_custom_css():
+    """Charge le CSS personnalisé depuis le fichier static/style.css"""
+    try:
+        with open("static/style.css", "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception as e:
+        print(f"⚠️ Erreur chargement CSS: {e}")
+        return ""
+
+# =============================================================================
 # 1. SYSTÈME DE LOGGING INVISIBLE
 # =============================================================================
 
@@ -461,6 +474,9 @@ Réponse (en tant que {philosophe.capitalize()}):"""
 # 4. INTERFACE GRADIO PRINCIPALE
 # =============================================================================
 
+# Chargement CSS personnalisé
+custom_css = load_custom_css()
+
 # Initialisation globale avec historiques
 print("🚀 Initialisation application...")
 manager = PhilosophesManager()
@@ -506,13 +522,13 @@ def reset_conversation(philosophe_nom):
     historiques[philosophe_nom] = []
     return "", "", ""  # historique, question, alerte
 
-# Interface Gradio
-with gr.Blocks(css="@import url('/file=static/style.css')", title="Bergson and Friends") as demo:
+# Interface Gradio avec CSS corrigé
+with gr.Blocks(css=custom_css, title="Bergson and Friends") as demo:
     
-    # Header
+    # Header avec chemin d'image corrigé
     gr.HTML("""
 <div class="custom-header">
-    <img src="/file=static/img/BergsonAndFriendsLOGO.png" alt="Bergson and Friends">
+    <img src="static/img/BergsonAndFriendsLOGO.png" alt="Bergson and Friends">
 </div>
 """)
     gr.Markdown("# Bergson and Friends")
@@ -523,8 +539,15 @@ with gr.Blocks(css="@import url('/file=static/style.css')", title="Bergson and F
         
         # BERGSON
         with gr.TabItem("Henri Bergson"):
-            gr.Markdown("### Henri Bergson")
-            gr.Markdown("*Philosophe de la durée, de l'élan vital et de l'intuition*")
+            gr.HTML("""
+<div class="philosophe-header">
+    <img src="static/img/Bergson.png" alt="Henri Bergson" class="portrait-philosophe">
+    <div class="philosophe-info">
+        <h3>Henri Bergson</h3>
+        <p><em>Philosophe de la durée, de l'élan vital et de l'intuition</em></p>
+    </div>
+</div>
+""")
             
             # Historique de conversation
             historique_bergson = gr.Textbox(
@@ -556,8 +579,15 @@ with gr.Blocks(css="@import url('/file=static/style.css')", title="Bergson and F
         
         # KANT
         with gr.TabItem("Immanuel Kant"):
-            gr.Markdown("### Immanuel Kant") 
-            gr.Markdown("*Philosophe critique des limites de la raison*")
+            gr.HTML("""
+<div class="philosophe-header">
+    <img src="static/img/Kant.png" alt="Immanuel Kant" class="portrait-philosophe">
+    <div class="philosophe-info">
+        <h3>Immanuel Kant</h3>
+        <p><em>Philosophe critique des limites de la raison</em></p>
+    </div>
+</div>
+""")
             
             # Historique de conversation
             historique_kant = gr.Textbox(
@@ -589,8 +619,15 @@ with gr.Blocks(css="@import url('/file=static/style.css')", title="Bergson and F
         
         # SPINOZA
         with gr.TabItem("Baruch Spinoza"):
-            gr.Markdown("### Baruch Spinoza")
-            gr.Markdown("*Philosophe de la substance unique et de la nécessité*")
+            gr.HTML("""
+<div class="philosophe-header">
+    <img src="static/img/Spinoza.png" alt="Baruch Spinoza" class="portrait-philosophe">
+    <div class="philosophe-info">
+        <h3>Baruch Spinoza</h3>
+        <p><em>Philosophe de la substance unique et de la nécessité</em></p>
+    </div>
+</div>
+""")
             
             # Historique de conversation
             historique_spinoza = gr.Textbox(
