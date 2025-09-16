@@ -461,15 +461,22 @@ Réponse (en tant que {philosophe.capitalize()}):"""
 # 4. INTERFACE GRADIO PRINCIPALE
 # =============================================================================
 
-# Initialisation globale
+# Initialisation globale avec historiques
 print("🚀 Initialisation application...")
 manager = PhilosophesManager()
 logger = DemoLogger()
 
-def chat_philosophe(question, philosophe_nom):
-    """Fonction de chat pour Gradio"""
+# Historiques de conversation par philosophe
+historiques = {
+    'bergson': [],
+    'kant': [],
+    'spinoza': []
+}
+
+def chat_philosophe(question, philosophe_nom, historique_actuel=""):
+    """Fonction de chat pour Gradio avec historique"""
     if not question or not question.strip():
-        return "Veuillez poser une question.", ""
+        return historique_actuel, "Veuillez poser une question.", ""
     
     # Génération réponse
     reponse, chunks, mode, crash_probable, crash_info = manager.generer_reponse(
@@ -483,12 +490,21 @@ def chat_philosophe(question, philosophe_nom):
         crash_info.get('temps', 0), mode, symptomes
     )
     
+    # Ajout à l'historique
+    nouvel_echange = f"**Vous :** {question}\n\n**{philosophe_nom.capitalize()} :** {reponse}\n\n---\n\n"
+    historique_mis_a_jour = historique_actuel + nouvel_echange
+    
     # Gestion alerte crash
     alert_msg = ""
     if crash_probable:
-        alert_msg = f"\n\n⚠️ Le philosophe semble fatiguer (échange {crash_info['echanges']}). Voulez-vous continuer la conversation ?"
+        alert_msg = f"⚠️ Le philosophe semble fatiguer (échange {crash_info['echanges']}). Voulez-vous continuer la conversation ?"
     
-    return reponse, alert_msg
+    return historique_mis_a_jour, "", alert_msg
+
+def reset_conversation(philosophe_nom):
+    """Reset de la conversation pour un philosophe"""
+    historiques[philosophe_nom] = []
+    return "", "", ""  # historique, question, alerte
 
 # Interface Gradio
 with gr.Blocks(title="Bergson and Friends", theme=gr.themes.Soft()) as demo:
@@ -505,22 +521,27 @@ with gr.Blocks(title="Bergson and Friends", theme=gr.themes.Soft()) as demo:
             gr.Markdown("### Henri Bergson")
             gr.Markdown("*Philosophe de la durée, de l'élan vital et de l'intuition*")
             
+            # Historique de conversation
+            historique_bergson = gr.Textbox(
+                label="Conversation avec Bergson",
+                lines=12,
+                max_lines=20,
+                interactive=False,
+                value="",
+                container=True
+            )
+            
             with gr.Row():
                 question_bergson = gr.Textbox(
                     label="Votre question à Bergson",
                     placeholder="Qu'est-ce que la durée pure ?",
-                    lines=2
+                    lines=2,
+                    container=True
                 )
             
             with gr.Row():
                 submit_bergson = gr.Button("Poser la question", variant="primary")
-                home_bergson = gr.Button("Retour accueil", variant="secondary")
-            
-            reponse_bergson = gr.Textbox(
-                label="Bergson vous répond",
-                lines=6,
-                interactive=False
-            )
+                reset_bergson = gr.Button("Nouvelle conversation", variant="secondary")
             
             alerte_bergson = gr.Textbox(
                 label="",
@@ -533,22 +554,27 @@ with gr.Blocks(title="Bergson and Friends", theme=gr.themes.Soft()) as demo:
             gr.Markdown("### Immanuel Kant") 
             gr.Markdown("*Philosophe critique des limites de la raison*")
             
+            # Historique de conversation
+            historique_kant = gr.Textbox(
+                label="Conversation avec Kant",
+                lines=12,
+                max_lines=20,
+                interactive=False,
+                value="",
+                container=True
+            )
+            
             with gr.Row():
                 question_kant = gr.Textbox(
                     label="Votre question à Kant",
                     placeholder="Que pouvons-nous connaître ?",
-                    lines=2
+                    lines=2,
+                    container=True
                 )
             
             with gr.Row():
                 submit_kant = gr.Button("Poser la question", variant="primary")
-                home_kant = gr.Button("Retour accueil", variant="secondary")
-            
-            reponse_kant = gr.Textbox(
-                label="Kant vous répond",
-                lines=6,
-                interactive=False
-            )
+                reset_kant = gr.Button("Nouvelle conversation", variant="secondary")
             
             alerte_kant = gr.Textbox(
                 label="",
@@ -561,22 +587,27 @@ with gr.Blocks(title="Bergson and Friends", theme=gr.themes.Soft()) as demo:
             gr.Markdown("### Baruch Spinoza")
             gr.Markdown("*Philosophe de la substance unique et de la nécessité*")
             
+            # Historique de conversation
+            historique_spinoza = gr.Textbox(
+                label="Conversation avec Spinoza",
+                lines=12,
+                max_lines=20,
+                interactive=False,
+                value="",
+                container=True
+            )
+            
             with gr.Row():
                 question_spinoza = gr.Textbox(
                     label="Votre question à Spinoza",
                     placeholder="Qu'est-ce que le conatus ?",
-                    lines=2
+                    lines=2,
+                    container=True
                 )
             
             with gr.Row():
                 submit_spinoza = gr.Button("Poser la question", variant="primary")
-                home_spinoza = gr.Button("Retour accueil", variant="secondary")
-            
-            reponse_spinoza = gr.Textbox(
-                label="Spinoza vous répond",
-                lines=6,
-                interactive=False
-            )
+                reset_spinoza = gr.Button("Nouvelle conversation", variant="secondary")
             
             alerte_spinoza = gr.Textbox(
                 label="",
@@ -584,72 +615,78 @@ with gr.Blocks(title="Bergson and Friends", theme=gr.themes.Soft()) as demo:
                 interactive=False
             )
     
-    # Fonctions de callback
-    def process_bergson(question):
-        reponse, alerte = chat_philosophe(question, "bergson")
-        return reponse, alerte, ""  # Clear question
+    # Fonctions de callback avec historique
+    def process_bergson(question, historique):
+        historique_maj, question_vide, alerte = chat_philosophe(question, "bergson", historique)
+        return historique_maj, question_vide, alerte
     
-    def process_kant(question):
-        reponse, alerte = chat_philosophe(question, "kant")
-        return reponse, alerte, ""
+    def process_kant(question, historique):
+        historique_maj, question_vide, alerte = chat_philosophe(question, "kant", historique)
+        return historique_maj, question_vide, alerte
     
-    def process_spinoza(question):
-        reponse, alerte = chat_philosophe(question, "spinoza")
-        return reponse, alerte, ""
+    def process_spinoza(question, historique):
+        historique_maj, question_vide, alerte = chat_philosophe(question, "spinoza", historique)
+        return historique_maj, question_vide, alerte
     
-    def reset_home():
-        return "", ""  # Clear question et réponse
+    def reset_conversation_bergson():
+        return reset_conversation("bergson")
+    
+    def reset_conversation_kant():
+        return reset_conversation("kant")
+    
+    def reset_conversation_spinoza():
+        return reset_conversation("spinoza")
     
     # Event handlers
     submit_bergson.click(
         process_bergson,
-        inputs=question_bergson,
-        outputs=[reponse_bergson, alerte_bergson, question_bergson]
+        inputs=[question_bergson, historique_bergson],
+        outputs=[historique_bergson, question_bergson, alerte_bergson]
     )
     
     question_bergson.submit(
         process_bergson,
-        inputs=question_bergson,
-        outputs=[reponse_bergson, alerte_bergson, question_bergson]
+        inputs=[question_bergson, historique_bergson],
+        outputs=[historique_bergson, question_bergson, alerte_bergson]
     )
     
-    home_bergson.click(
-        reset_home,
-        outputs=[question_bergson, reponse_bergson]
+    reset_bergson.click(
+        reset_conversation_bergson,
+        outputs=[historique_bergson, question_bergson, alerte_bergson]
     )
     
     submit_kant.click(
         process_kant,
-        inputs=question_kant,
-        outputs=[reponse_kant, alerte_kant, question_kant]
+        inputs=[question_kant, historique_kant],
+        outputs=[historique_kant, question_kant, alerte_kant]
     )
     
     question_kant.submit(
         process_kant,
-        inputs=question_kant,
-        outputs=[reponse_kant, alerte_kant, question_kant]
+        inputs=[question_kant, historique_kant],
+        outputs=[historique_kant, question_kant, alerte_kant]
     )
     
-    home_kant.click(
-        reset_home,
-        outputs=[question_kant, reponse_kant]
+    reset_kant.click(
+        reset_conversation_kant,
+        outputs=[historique_kant, question_kant, alerte_kant]
     )
     
     submit_spinoza.click(
         process_spinoza,
-        inputs=question_spinoza,
-        outputs=[reponse_spinoza, alerte_spinoza, question_spinoza]
+        inputs=[question_spinoza, historique_spinoza],
+        outputs=[historique_spinoza, question_spinoza, alerte_spinoza]
     )
     
     question_spinoza.submit(
         process_spinoza,
-        inputs=question_spinoza,
-        outputs=[reponse_spinoza, alerte_spinoza, question_spinoza]
+        inputs=[question_spinoza, historique_spinoza],
+        outputs=[historique_spinoza, question_spinoza, alerte_spinoza]
     )
     
-    home_spinoza.click(
-        reset_home,
-        outputs=[question_spinoza, reponse_spinoza]
+    reset_spinoza.click(
+        reset_conversation_spinoza,
+        outputs=[historique_spinoza, question_spinoza, alerte_spinoza]
     )
 
 # Lancement
