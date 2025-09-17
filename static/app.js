@@ -59,3 +59,41 @@ document.querySelectorAll('.qa-form').forEach(form => {
     textarea.value = '';
   });
 });
+
+// Gestion des formulaires
+document.querySelectorAll('.qa-form').forEach(form => {
+  form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const textarea = form.querySelector('textarea');
+      const question = textarea.value.trim();
+      const philosopherId = form.closest('.philosopher').id;
+      
+      if (!question) return;
+      
+      try {
+          const response = await fetch(`/.netlify/functions/${philosopherId}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ question })
+          });
+          
+          const data = await response.json();
+          
+          // Afficher la réponse dans qa-history
+          const history = form.parentElement.querySelector('.qa-history');
+          const qaBlock = document.createElement('div');
+          qaBlock.innerHTML = `
+              <div class="question">Q: ${question}</div>
+              <div class="answer">R: ${data.answer}</div>
+          `;
+          history.appendChild(qaBlock);
+          
+          // Vider le textarea
+          textarea.value = '';
+          
+      } catch (error) {
+          console.error('Erreur:', error);
+      }
+  });
+});
