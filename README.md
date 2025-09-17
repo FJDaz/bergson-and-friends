@@ -12,3 +12,4 @@ short_description: Trois philosophes
 ---
 
 Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+
