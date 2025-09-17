@@ -58,7 +58,7 @@ Tu peux répondre sans dire "Je" si c'est plus naturel, mais reste fidèle à ma
         console.log('HF_KEY exists:', !!process.env.HF_KEY);
         console.log('HF_KEY length:', process.env.HF_KEY ? process.env.HF_KEY.length : 0);
         
-        const response = await fetch('https://api-inference.huggingface.co/models/microsoft/DialoGPT-small', {
+        const response = await fetch('https://api-inference.huggingface.co/models/gpt2', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${process.env.HF_KEY}`,
