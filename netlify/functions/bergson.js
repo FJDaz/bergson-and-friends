@@ -55,6 +55,9 @@ Tu peux répondre sans dire "Je" si c'est plus naturel, mais reste fidèle à ma
         const promptComplet = `${promptSysteme}\n\nQuestion: ${question}\nRéponse:`;
 
         // Appeler l'API HuggingFace
+        console.log('HF_KEY exists:', !!process.env.HF_KEY);
+        console.log('HF_KEY length:', process.env.HF_KEY ? process.env.HF_KEY.length : 0);
+        
         const response = await fetch('https://api-inference.huggingface.co/models/microsoft/DialoGPT-small', {
             method: 'POST',
             headers: {
