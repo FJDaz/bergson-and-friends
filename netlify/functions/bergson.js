@@ -58,14 +58,21 @@ Tu peux répondre sans dire "Je" si c'est plus naturel, mais reste fidèle à ma
         console.log('HF_KEY exists:', !!process.env.HF_KEY);
         console.log('HF_KEY length:', process.env.HF_KEY ? process.env.HF_KEY.length : 0);
         
-        const response = await fetch('https://api-inference.huggingface.co/models/gpt2', {
+        const response = await fetch('https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${process.env.HF_KEY}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                inputs: promptComplet
+                inputs: promptComplet,
+                parameters: {
+                    max_new_tokens: 400,
+                    do_sample: true,
+                    temperature: 0.7,
+                    top_p: 0.9,
+                    repetition_penalty: 1.1
+                }
             })
         });
 
