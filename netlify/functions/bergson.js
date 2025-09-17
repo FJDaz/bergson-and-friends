@@ -1,5 +1,4 @@
 // netlify/functions/bergson.js
-const fetch = require('node-fetch');
 
 exports.handler = async (event, context) => {
     // CORS headers pour permettre les appels depuis le frontend
