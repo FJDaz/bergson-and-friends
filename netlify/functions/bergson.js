@@ -57,30 +57,8 @@ Tu peux répondre sans dire "Je" si c'est plus naturel, mais reste fidèle à ma
         // Appeler l'API HuggingFace
         console.log('HF_KEY exists:', !!process.env.HF_KEY);
         console.log('HF_KEY length:', process.env.HF_KEY ? process.env.HF_KEY.length : 0);
-        
-        const response = await fetch('https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${process.env.HF_KEY}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                inputs: promptComplet,
-                parameters: {
-                    max_new_tokens: 400,
-                    do_sample: true,
-                    temperature: 0.7,
-                    top_p: 0.9,
-                    repetition_penalty: 1.1
-                }
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error(`HuggingFace API error: ${response.status}`);
-        }
-
-        const data = await response.json();
+        // Mock temporaire - réponse fixe
+        const reponse = "La durée, selon ma philosophie, n'est pas le temps mécanique des horloges. C'est le temps vécu de la conscience, cette continuité créatrice où passé et présent se fondent dans l'élan vital.";
         
         // Extraire la réponse générée
         let reponse = '';
