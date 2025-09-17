@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Bergson and Friends</title>
+<style>
+/*FONTS-------------------*/
+@font-face {
+    font-family: 'Grotesque MT Std';
+    src: url('fonts/GrotesqueMTStd-Black.woff2') format('woff2'), url('fonts/GrotesqueMTStd-Black.woff') format('woff');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std Bold';
+    src: url('fonts/GrotesqueMTStd-Bold.woff2') format('woff2'), url('fonts/GrotesqueMTStd-Bold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std Bold Condensed';
+    src: url('fonts/GrotesqueMTStd-BoldExtended.woff2') format('woff2'), url('fonts/GrotesqueMTStd-BoldExtended.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std';
+    src: url('fonts/GrotesqueMTStd-Condensed.woff2') format('woff2'), url('fonts/GrotesqueMTStd-Condensed.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std';
+    src: url('fonts/GrotesqueMTStd-ExtraCond.woff2') format('woff2'), url('fonts/GrotesqueMTStd-ExtraCond.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std';
+    src: url('fonts/GrotesqueMTStd-Italic.woff2') format('woff2'), url('fonts/GrotesqueMTStd-Italic.woff') format('woff');
+    font-weight: normal;
+    font-style: italic;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std';
+    src: url('fonts/GrotesqueMTStd-Light.woff2') format('woff2'), url('fonts/GrotesqueMTStd-Light.woff') format('woff');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std';
+    src: url('fonts/GrotesqueMTStd-LightCond.woff2') format('woff2'), url('fonts/GrotesqueMTStd-LightCond.woff') format('woff');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std';
+    src: url('fonts/GrotesqueMTStd-LightItalic.woff2') format('woff2'), url('fonts/GrotesqueMTStd-LightItalic.woff') format('woff');
+    font-weight: 300;
+    font-style: italic;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std';
+    src: url('fonts/GrotesqueMTStd.woff2') format('woff2'), url('fonts/GrotesqueMTStd.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Letter Gothic Std';
+    src: url('fonts/LetterGothicStd-Bold.woff2') format('woff2'), url('fonts/LetterGothicStd-Bold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Letter Gothic Std';
+    src: url('fonts/LetterGothicStd-BoldSlanted.woff2') format('woff2'), url('fonts/LetterGothicStd-BoldSlanted.woff') format('woff');
+    font-weight: bold;
+    font-style: italic;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Letter Gothic Std';
+    src: url('fonts/LetterGothicStd-Slanted.woff2') format('woff2'), url('fonts/LetterGothicStd-Slanted.woff') format('woff');
+    font-weight: 500;
+    font-style: italic;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Letter Gothic Std';
+    src: url('fonts/LetterGothicStd.woff2') format('woff2'), url('fonts/LetterGothicStd.woff') format('woff');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+body {
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Grotesque MT Std Bold', Gotham, "Helvetica Neue", Helvetica, Arial, "sans-serif"
+}
+button {
+    font-family: 'Grotesque MT Std', Gotham, "Helvetica Neue", Helvetica, Arial, "sans-serif"
+}
+header {
+    padding: 2rem 1rem;
+    width: 50%;
+    margin: auto;
+    border-bottom: solid 1px;
+}
+header h1 {
+    margin: 0;
+    font-weight: 700
+}
+main {
+    padding: 2rem 1rem;
+}
+/* Grille des philosophes */
+.philosophers {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+}
+.philosopher {
+    flex: 0 0 auto;
+    transition: transform 0.3s ease;
+}
+.philosopher#bergson, .philosopher.active#bergson {
+    transform-origin: 100% 0
+}
+.philosopher#kant, .philosopher#kant.active {
+    transform-origin: center 0
+}
+.philosopher#spinoza, .philosopher#spinoza.active {
+    transform-origin: 0 0
+}
+.philosopher.active {
+    transform: scale(1.5);
+    transform-origin: 100% 0
+}
+.philosopher-trigger {
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+}
+.philosopher-trigger img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: block;
+    margin: 0 auto 0.5rem;
+}
+.dialogue {
+    margin-top: 1rem;
+    text-align: left;
+}
+.qa-form textarea {
+    width: 100%;
+    min-height: 60px;
+    margin-bottom: 0.5rem;
+    border: none;
+    border-top: solid .2px;
+}
+.qa-history {
+    margin-top: 1rem;
+    padding-top: 1rem;
+}
+.qa {
+    margin-bottom: 0.5rem;
+}
+h2 span {
+    font-weight: 700
+}
+input[type=image] {
+    width: 1em;
+    float: right;
+}
+textarea {
+    resize: none
+}
+</style>
+</head>
+<body>
+<header> <img src="img/BergsonAndFriendsLOGO.png"> </header>
+<main>
+  <section class="philosophers"> 
+    
+    <!-- Philosophe 1 -->
+    <article class="philosopher" id="bergson">
+      <button class="philosopher-trigger">
+      <h2>Henri <span>Bergson</span></h2>
+      <img src="img/Bergson.png" alt="Henri Bergson"> </button>
+      <div class="dialogue" hidden>
+        <form class="qa-form">
+          <textarea id="question-bergson" name="question"></textarea>
+          <input type="image" src="img/Submit.png" alt="envoyer">
+          </input>
+        </form>
+        <div class="qa-history"></div>
+      </div>
+    </article>
+    
+    <!-- Philosophe 2 -->
+    <article class="philosopher" id="kant">
+      <button class="philosopher-trigger">
+      <h2>Immanuel <span>Kant</span></h2>
+      <img src="img/Kant.png" alt="Immanuel Kant"> </button>
+      <div class="dialogue" hidden>
+        <form class="qa-form">
+          <textarea id="question-kant" name="question"></textarea>
+          <input type="image" src="img/Submit.png" alt="envoyer">
+          </input>
+        </form>
+        <div class="qa-history"></div>
+      </div>
+    </article>
+    
+    <!-- Philosophe 3 -->
+    <article class="philosopher" id="spinoza">
+      <button class="philosopher-trigger">
+      <h2>Baruch <span>Spinoza</span></h2>
+      <img src="img/Spinoza.png" alt="Baruch Spinoza"> </button>
+      <div class="dialogue" hidden>
+        <form class="qa-form">
+          <textarea id="question-spinoza" name="question"></textarea>
+          <input type="image" src="img/Submit.png" alt="envoyer">
+          </input>
+        </form>
+        <div class="qa-history"></div>
+      </div>
+    </article>
+  </section>
+</main>
+<script>
+const philosophers = document.querySelectorAll('.philosopher');
+
+document.querySelectorAll('.philosopher-trigger').forEach(trigger => {
+  trigger.addEventListener('click', () => {
+    const article = trigger.closest('.philosopher');
+    const isActive = article.classList.contains('active');
+
+    // Fermer tous les autres et reset leurs translations
+    philosophers.forEach(philo => {
+      philo.classList.remove('active');
+      philo.style.transform = '';
+      philo.querySelector('.dialogue').hidden = true;
+    });
+
+    if (!isActive) {
+      article.classList.add('active');
+      article.querySelector('.dialogue').hidden = false;
+
+      // Calculer déplacement des voisins
+      const scale = 2;
+      const rect = article.getBoundingClientRect();
+
+      philosophers.forEach(philo => {
+        if (philo !== article) {
+          const philoRect = philo.getBoundingClientRect();
+          const dx = (rect.width * (scale - 1)) / 2; // ajustement horizontal simple
+          const dy = (rect.height * (scale - 1)) / 2; // ajustement vertical si nécessaire
+
+          // Déplacement selon la position relative
+          if (philoRect.left < rect.left) {
+            philo.style.transform = `translateX(-${dx}px)`;
+          } else if (philoRect.left > rect.left) {
+            philo.style.transform = `translateX(${dx}px)`;
+          }
+
+          // Si besoin, tu peux ajuster verticalement
+          // if (philoRect.top < rect.top) philo.style.transform += ` translateY(-${dy}px)`;
+          // else if (philoRect.top > rect.top) philo.style.transform += ` translateY(${dy}px)`;
+        }
+      });
+    }
+  });
+});
+
+
+    // Gestion formulaire Q/R
+    document.querySelectorAll('.qa-form').forEach(form => {
+      form.addEventListener('submit', e => {
+        e.preventDefault();
+        const textarea = form.querySelector('textarea');
+        const text = textarea.value.trim();
+        if (!text) return;
+
+        const qaHistory = form.parentElement.querySelector('.qa-history');
+        const div = document.createElement('div');
+        div.className = 'qa';
+        div.textContent = "Vous : " + text;
+        qaHistory.appendChild(div);
+
+        textarea.value = '';
+      });
+    });
+  </script>
+</body>
+</html>
