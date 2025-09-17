@@ -55,7 +55,7 @@ Tu peux répondre sans dire "Je" si c'est plus naturel, mais reste fidèle à ma
         const promptComplet = `${promptSysteme}\n\nQuestion: ${question}\nRéponse:`;
 
         // Appeler l'API HuggingFace
-        const response = await fetch('https://api-inference.huggingface.co/models/mistralai/microsoft/DialoGPT-medium', {
+        const response = await fetch('https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${process.env.HF_KEY}`,
