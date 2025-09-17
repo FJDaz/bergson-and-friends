@@ -57,6 +57,40 @@
     </article>
   </section>
 </main>
-<script src="/static/app.js"></script>">
+<script src="/static/app.js">
+  // Fix définitif pour tous les philosophes
+document.querySelectorAll('input[type="image"]').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        const form = this.closest('form');
+        const textarea = form.querySelector('textarea');
+        const question = textarea.value.trim();
+        
+        if (!question) return;
+        
+        const philosopherId = form.closest('.philosopher').id;
+        console.log(`Question pour ${philosopherId}:`, question);
+        
+        fetch(`/.netlify/functions/${philosopherId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question })
+        })
+        .then(r => r.json())
+        .then(data => {
+            const history = form.parentElement.querySelector('.qa-history');
+            history.innerHTML += `
+                <div style="margin: 10px 0; padding: 10px; border-left: 3px solid #ccc;">
+                    <div><strong>Q:</strong> ${question}</div>
+                    <div><strong>R:</strong> ${data.answer}</div>
+                </div>
+            `;
+            textarea.value = '';
+        })
+        .catch(console.error);
+    });
+});
+</script>">
 </body>
 </html>
