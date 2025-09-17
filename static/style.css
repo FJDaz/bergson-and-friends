@@ -142,6 +142,9 @@ main {
     transform: scale(1.5);
     transform-origin: 100% 0
 }
+.philosopher.active img{
+    transform: scale(-1)
+}
 .philosopher-trigger {
     background: none;
     border: none;
