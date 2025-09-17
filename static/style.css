@@ -1,203 +1,185 @@
-custom_css = """
-/* Import de vos fonts personnalisées */
+/*FONTS-------------------*/
 @font-face {
     font-family: 'Grotesque MT Std';
-    src: url('/file=static/fonts/GrotesqueMTStd-Black.woff2') format('woff2'), url('/file=static/fonts/GrotesqueMTStd-Black.woff') format('woff');
+    src: url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-Black.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-Black.woff') format('woff');
     font-weight: 900;
     font-style: normal;
     font-display: swap;
 }
 @font-face {
     font-family: 'Grotesque MT Std Bold';
-    src: url('/file=static/fonts/GrotesqueMTStd-Bold.woff2') format('woff2'), url('/file=static/fonts/GrotesqueMTStd-Bold.woff') format('woff');
+    src: url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-Bold.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-Bold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std Bold Condensed';
+    src: url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-BoldExtended.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-BoldExtended.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std';
+    src: url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-Condensed.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-Condensed.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std';
+    src: url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-ExtraCond.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-ExtraCond.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std';
+    src: url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-Italic.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-Italic.woff') format('woff');
+    font-weight: normal;
+    font-style: italic;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std';
+    src: url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-Light.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-Light.woff') format('woff');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std';
+    src: url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-LightCond.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-LightCond.woff') format('woff');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std';
+    src: url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-LightItalic.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-LightItalic.woff') format('woff');
+    font-weight: 300;
+    font-style: italic;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std';
+    src: url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Letter Gothic Std';
+    src: url('https://fjdaz.com/bergson/statics/fonts/LetterGothicStd-Bold.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/LetterGothicStd-Bold.woff') format('woff');
     font-weight: bold;
     font-style: normal;
     font-display: swap;
 }
 @font-face {
     font-family: 'Letter Gothic Std';
-    src: url('/file=static/fonts/LetterGothicStd.woff2') format('woff2'), url('/file=static/fonts/LetterGothicStd.woff') format('woff');
+    src: url('https://fjdaz.com/bergson/statics/fonts/LetterGothicStd-BoldSlanted.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/LetterGothicStd-BoldSlanted.woff') format('woff');
+    font-weight: bold;
+    font-style: italic;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Letter Gothic Std';
+    src: url('https://fjdaz.com/bergson/statics/fonts/LetterGothicStd-Slanted.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/LetterGothicStd-Slanted.woff') format('woff');
+    font-weight: 500;
+    font-style: italic;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Letter Gothic Std';
+    src: url('https://fjdaz.com/bergson/statics/fonts/LetterGothicStd.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/LetterGothicStd.woff') format('woff');
     font-weight: 500;
     font-style: normal;
     font-display: swap;
 }
-
-/* Reset et base - style de votre HTML */
-.gradio-container {
-    margin: 0 !important;
-    padding: 0 !important;
-    text-align: center !important;
-    font-family: 'Grotesque MT Std Bold', Gotham, "Helvetica Neue", Helvetica, Arial, "sans-serif" !important;
-    background: white !important;
-    color: black !important;
-    max-width: none !important;
+body {
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Grotesque MT Std Bold', Gotham, "Helvetica Neue", Helvetica, Arial, "sans-serif"
 }
-
-/* Header avec votre logo */
-.custom-header {
-    padding: 2rem 1rem !important;
-    width: 50% !important;
-    margin: auto !important;
-    border-bottom: solid 1px black !important;
-    text-align: center !important;
+button {
+    font-family: 'Grotesque MT Std', Gotham, "Helvetica Neue", Helvetica, Arial, "sans-serif"
 }
-
-.custom-header img {
-    max-width: 100% !important;
-    height: auto !important;
+header {
+    padding: 2rem 1rem;
+    width: 50%;
+    margin: auto;
+    border-bottom: solid 1px;
 }
-
-/* Container principal */
-.main-content {
-    padding: 2rem 1rem !important;
+header h1 {
+    margin: 0;
+    font-weight: 700
 }
-
-/* Grille des philosophes - Adaptation des tabs Gradio pour ressembler à vos boutons */
-.tab-nav {
-    display: flex !important;
-    justify-content: center !important;
-    gap: 2rem !important;
-    border: none !important;
-    background: none !important;
-    margin-bottom: 2rem !important;
+main {
+    padding: 2rem 1rem;
 }
-
-.tab-nav button {
-    background: none !important;
-    border: none !important;
-    cursor: pointer !important;
-    text-align: center !important;
-    transition: transform 0.3s ease !important;
-    flex: 0 0 auto !important;
-    font-family: 'Grotesque MT Std Bold', sans-serif !important;
-    padding: 1rem !important;
-    margin: 0 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
+/* Grille des philosophes */
+.philosophers {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
 }
-
-/* Effet d'agrandissement comme dans votre HTML */
-.tab-nav button.selected {
-    transform: scale(1.5) !important;
+.philosopher {
+    flex: 0 0 auto;
+    transition: transform 0.3s ease;
 }
-
-.tab-nav button.selected:nth-child(1) {
-    transform-origin: 100% 0 !important;
+.philosopher#bergson, .philosopher.active#bergson {
+    transform-origin: 100% 0
 }
-.tab-nav button.selected:nth-child(2) {
-    transform-origin: center 0 !important;
+.philosopher#kant, .philosopher#kant.active {
+    transform-origin: center 0
 }
-.tab-nav button.selected:nth-child(3) {
-    transform-origin: 0 0 !important;
+.philosopher#spinoza, .philosopher#spinoza.active {
+    transform-origin: 0 0
 }
-
-/* Style des images philosophes dans les tabs */
-.philosopher-image {
-    width: 100px !important;
-    height: 100px !important;
-    border-radius: 50% !important;
-    display: block !important;
-    margin: 0 auto 0.5rem !important;
+.philosopher.active {
+    transform: scale(1.5);
+    transform-origin: 100% 0
 }
-
-.philosopher-name {
-    font-size: 1.2rem !important;
-    font-weight: 700 !important;
-    margin: 0 !important;
+.philosopher-trigger {
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: center;
 }
-
-.philosopher-name span {
-    font-weight: 700 !important;
+.philosopher-trigger img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: block;
+    margin: 0 auto 0.5rem;
 }
-
-/* Zone de dialogue - style de votre interface */
-.dialogue-container {
-    margin-top: 1rem !important;
-    text-align: left !important;
-    max-width: 800px !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
+.dialogue {
+    margin-top: 1rem;
+    text-align: left;
 }
-
-/* Historique des conversations */
-.chatbot {
-    background: white !important;
-    border: none !important;
-    box-shadow: none !important;
-    padding: 1rem !important;
-    margin-bottom: 1rem !important;
-    min-height: 300px !important;
+.qa-form textarea {
+    width: 100%;
+    min-height: 60px;
+    margin-bottom: 0.5rem;
+    border: none;
+    border-top: solid .2px;
 }
-
-.chatbot .message {
-    font-family: 'Grotesque MT Std', sans-serif !important;
-    color: black !important;
-    line-height: 1.6 !important;
-    margin-bottom: 1rem !important;
-    padding: 0.5rem !important;
-    border-bottom: 1px solid #eee !important;
+.qa-history {
+    margin-top: 1rem;
+    padding-top: 1rem;
 }
-
-/* Zone de saisie - style de votre textarea */
-.custom-textarea {
-    width: 100% !important;
-    min-height: 60px !important;
-    border: none !important;
-    border-top: solid 0.2px black !important;
-    resize: none !important;
-    font-family: 'Grotesque MT Std' !important;
-    padding: 0.5rem !important;
-    background: white !important;
-    color: black !important;
+.qa {
+    margin-bottom: 0.5rem;
 }
-
-.custom-textarea:focus {
-    outline: none !important;
-    border-top: solid 1px black !important;
+h2 span {
+    font-weight: 700
 }
-
-/* Bouton submit avec votre image */
-.submit-btn {
-    background: none !important;
-    border: none !important;
-    padding: 0 !important;
-    cursor: pointer !important;
-    width: 1em !important;
-    height: 1em !important;
-    float: right !important;
-    margin-left: 0.5rem !important;
+input[type=image] {
+    width: 1em;
+    float: right;
 }
-
-.submit-btn img {
-    width: 100% !important;
-    height: 100% !important;
-}
-
-/* Masquer les éléments Gradio non désirés */
-.gr-form {
-    background: none !important;
-    border: none !important;
-    padding: 0 !important;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .custom-header {
-        width: 90% !important;
-    }
-    
-    .tab-nav {
-        flex-direction: column !important;
-        gap: 1rem !important;
-    }
-    
-    .tab-nav button.selected {
-        transform: scale(1.2) !important;
-        transform-origin: center !important;
-    }
-    
-    .philosopher-image {
-        width: 80px !important;
-        height: 80px !important;
-    }
+textarea {
+    resize: none
 }
