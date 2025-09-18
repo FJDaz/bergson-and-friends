@@ -163,6 +163,13 @@ function getKantFallbackResponse(question) {
         return "L'espace et le temps sont les formes a priori de notre sensibilité, non des propriétés des choses en soi. Ils sont les conditions sous lesquelles nous recevons les intuitions sensibles. Cette idéalité transcendantale de l'espace et du temps fonde la possibilité des mathématiques comme science synthétique a priori.";
     }
     
-    // Réponse générale kantienne par défaut
-    return "Cette question appelle une démarche critique qui examine d'abord les conditions de possibilité de sa propre formulation. Il convient de distinguer ce qui relève de la sensibilité, de l'entendement, et de la raison, afin de délimiter les frontières légitimes de notre connaissance et de notre action morale.";
+    // Debug: réponse différente à chaque appel pour identifier le problème
+    const debugResponses = [
+        `[DEBUG 1] Question reçue: "${question}" - Token présent: ${tokenPresent} - Cette question révèle les limites de l'entendement humain face à l'inconditionné.`,
+        `[DEBUG 2] Question "${question}" - Mode: ${tokenPresent ? 'AI' : 'MOCK'} - L'impératif catégorique nous commande d'agir selon des maximes universalisables.`,
+        `[DEBUG 3] Analyse: "${question}" - L'antinomie de la raison pure montre que certaines questions dépassent les limites de notre connaissance phénoménale.`,
+        `[DEBUG 4] Réponse à "${question}" - La critique transcendantale examine ce qui rend possible notre expérience a priori.`
+    ];
+    const randomIndex = Math.floor(Math.random() * debugResponses.length);
+    return debugResponses[randomIndex];
 }
