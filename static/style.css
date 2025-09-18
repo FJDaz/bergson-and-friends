@@ -161,6 +161,9 @@ main {
 .dialogue {
     margin-top: 1rem;
     text-align: left;
+	    width: 20em;
+    font-size: .8em;
+    font-family: 'Grotesque MT Std';
 }
 .qa-form textarea {
     width: 100%;
@@ -185,4 +188,55 @@ input[type=image] {
 }
 textarea {
     resize: none
+}
+/* Styling pour l'historique Q/A */
+.qa-history {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #fafafa;
+}
+
+.qa-pair {
+    margin-bottom: 20px;
+    padding: 15px;
+    border-left: 4px solid #333;
+    background-color: white;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.qa-pair:last-child {
+    margin-bottom: 0;
+}
+
+.question {
+    margin-bottom: 10px;
+    font-weight: normal;
+    color: #555;
+}
+
+.answer {
+    font-style: italic;
+    line-height: 1.6;
+    color: #333;
+}
+
+.question strong,
+.answer strong {
+    color: #000;
+    font-weight: bold;
+}
+
+/* Formulaire en bas */
+.qa-form {
+    position: sticky;
+    bottom: 0;
+    background-color: white;
+    padding: 15px;
+    border-top: 2px solid #eee;
+    border-radius: 0 0 8px 8px;
 }

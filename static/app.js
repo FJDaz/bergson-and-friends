@@ -23,22 +23,62 @@ document.querySelectorAll('.philosopher-trigger').forEach(trigger => {
       philosophers.forEach(philo => {
         if (philo !== article) {
           const philoRect = philo.getBoundingClientRect();
-          const dx = (rect.width * (scale - 1)) / 2; // ajustement horizontal simple
-          const dy = (rect.height * (scale - 1)) / 2; // ajustement vertical si nécessaire
+          const dx = (rect.width * (scale - 1)) / 2;
 
-          // Déplacement selon la position relative
           if (philoRect.left < rect.left) {
             philo.style.transform = `translateX(-${dx}px)`;
           } else if (philoRect.left > rect.left) {
             philo.style.transform = `translateX(${dx}px)`;
           }
-
-          // Si besoin, tu peux ajuster verticalement
-          // if (philoRect.top < rect.top) philo.style.transform += ` translateY(-${dy}px)`;
-          // else if (philoRect.top > rect.top) philo.style.transform += ` translateY(${dy}px)`;
         }
       });
     }
+  });
+});
+
+// Gestion des formulaires avec scroll automatique
+document.querySelectorAll('.qa-form').forEach(form => {
+  form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const textarea = form.querySelector('textarea');
+      const question = textarea.value.trim();
+      const philosopherId = form.closest('.philosopher').id;
+      
+      if (!question) return;
+      
+      try {
+          const response = await fetch(`/.netlify/functions/${philosopherId}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ question })
+          });
+          
+          const data = await response.json();
+          
+          // Afficher la réponse dans qa-history
+          const history = form.parentElement.querySelector('.qa-history');
+          const qaBlock = document.createElement('div');
+          qaBlock.className = 'qa-pair';
+          qaBlock.innerHTML = `
+              <div class="question"><strong>Q:</strong> ${question}</div>
+              <div class="answer"><strong>R:</strong> ${data.answer}</div>
+          `;
+          history.appendChild(qaBlock);
+          
+          // Scroll automatique vers la dernière réponse
+          qaBlock.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'end' 
+          });
+          
+          // Focus sur le textarea pour la prochaine question
+          textarea.value = '';
+          textarea.focus();
+          
+      } catch (error) {
+          console.error('Erreur:', error);
+      }
   });
 });
 
