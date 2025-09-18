@@ -141,9 +141,6 @@ Réponds à la question suivante en incarnant Kant :`;
 // Réponses fallback contextuelle de qualité
 function getKantFallbackResponse(question) {
     const lowerQ = question.toLowerCase();
-    const debugResponses = [...];
-    const randomIndex = Math.floor(Math.random() * debugResponses.length);
-    return debugResponses[randomIndex];
     
     // Réponses spécialisées par thème kantien
     if (lowerQ.includes('catégorique') || lowerQ.includes('morale') || lowerQ.includes('devoir')) {
@@ -166,13 +163,14 @@ function getKantFallbackResponse(question) {
         return "L'espace et le temps sont les formes a priori de notre sensibilité, non des propriétés des choses en soi. Ils sont les conditions sous lesquelles nous recevons les intuitions sensibles. Cette idéalité transcendantale de l'espace et du temps fonde la possibilité des mathématiques comme science synthétique a priori.";
     }
     
-    // Debug: réponse différente à chaque appel pour identifier le problème
-    const debugResponses = [
-        `[DEBUG 1] Question reçue: "${question}" - Token présent: ${tokenPresent} - Cette question révèle les limites de l'entendement humain face à l'inconditionné.`,
-        `[DEBUG 2] Question "${question}" - Mode: ${tokenPresent ? 'AI' : 'MOCK'} - L'impératif catégorique nous commande d'agir selon des maximes universalisables.`,
-        `[DEBUG 3] Analyse: "${question}" - L'antinomie de la raison pure montre que certaines questions dépassent les limites de notre connaissance phénoménale.`,
-        `[DEBUG 4] Réponse à "${question}" - La critique transcendantale examine ce qui rend possible notre expérience a priori.`
-    ];
-    const randomIndex = Math.floor(Math.random() * debugResponses.length);
-    return debugResponses[randomIndex];
+    if (lowerQ.includes('système') || lowerQ.includes('philosophie') || lowerQ.includes('méthode')) {
+        return "Mon système se fonde sur l'examen critique des facultés humaines : sensibilité, entendement et raison. Chaque faculté a son domaine légitime et ses limites. La sensibilité reçoit les intuitions, l'entendement les organise par concepts, la raison cherche l'inconditionné. Cette architecture transcendantale révèle les conditions a priori de toute expérience possible.";
+    }
+    
+    if (lowerQ.includes('bonjour') || lowerQ.includes('salut') || lowerQ.includes('hello')) {
+        return "Permettez-moi de vous saluer selon les principes de la raison pratique. Tout être raisonnable mérite le respect en tant que fin en soi, jamais seulement comme moyen. C'est dans cette dignité fondamentale que réside la possibilité de l'autonomie morale et du règne des fins.";
+    }
+    
+    // IMPORTANT: Réponse par défaut garantie
+    return "Cette question appelle une démarche critique qui examine d'abord les conditions de possibilité de sa propre formulation. Il convient de distinguer ce qui relève de la sensibilité, de l'entendement, et de la raison, afin de délimiter les frontières légitimes de notre connaissance et de notre action morale.";
 }
