@@ -141,6 +141,9 @@ Réponds à la question suivante en incarnant Kant :`;
 // Réponses fallback contextuelle de qualité
 function getKantFallbackResponse(question) {
     const lowerQ = question.toLowerCase();
+    const debugResponses = [...];
+    const randomIndex = Math.floor(Math.random() * debugResponses.length);
+    return debugResponses[randomIndex];
     
     // Réponses spécialisées par thème kantien
     if (lowerQ.includes('catégorique') || lowerQ.includes('morale') || lowerQ.includes('devoir')) {
