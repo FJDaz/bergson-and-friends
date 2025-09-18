@@ -126,6 +126,7 @@ Réponds à la question suivante en incarnant Kant :`;
 
     } catch (error) {
         console.error('Kant function error:', error);
+        console.log(`Full error:`, error);
         return {
             statusCode: 500,
             headers,
