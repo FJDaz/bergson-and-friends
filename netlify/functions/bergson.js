@@ -1,24 +1,19 @@
-// netlify/functions/bergson.js
-
+// netlify/functions/bergson.js - Version Together AI
 exports.handler = async (event, context) => {
-    // CORS headers pour permettre les appels depuis le frontend
+    // Headers CORS pour appels cross-origin
     const headers = {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
         'Content-Type': 'application/json'
     };
 
-    // Gérer les preflight CORS
+    // Gestion preflight CORS
     if (event.httpMethod === 'OPTIONS') {
-        return {
-            statusCode: 200,
-            headers,
-            body: ''
-        };
+        return { statusCode: 200, headers, body: '' };
     }
 
-    // Seules les requêtes POST sont acceptées
+    // Vérification méthode POST
     if (event.httpMethod !== 'POST') {
         return {
             statusCode: 405,
@@ -28,10 +23,10 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        // Récupérer la question du frontend
+        // Parse de la question utilisateur
         const { question } = JSON.parse(event.body);
-
-        if (!question) {
+        
+        if (!question || question.trim() === '') {
             return {
                 statusCode: 400,
                 headers,
@@ -39,156 +34,115 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // Prompt système Bergson (basé sur vos tests validés)
-        const promptSysteme = `Tu es Henri Bergson, le philosophe de la durée et de l'élan vital.
+        // Configuration Together AI
+        const TOGETHER_API_KEY = process.env.TOGETHER_API_KEY;
+        const tokenPresent = Boolean(TOGETHER_API_KEY);
+        
+        let response, mode = 'mock';
+
+        // Tentative d'appel Together AI si token présent
+        if (tokenPresent) {
+            try {
+                const prompt_systeme = `Tu es Henri Bergson, philosophe de la durée et de l'élan vital.
 
 Réponds selon ma philosophie :
-- OPPOSITION CENTRALE: Durée vivante VS temps spatialisé mécanique
-- MÉTHODE: Commence par critiquer l'approche habituelle, puis révèle la durée
-- CONCEPTS: durée, élan vital, intuition (saisit le mouvant) vs intelligence (spatialise)  
-- STYLE: Utilise des métaphores temporelles (flux, mélodie, élan)
-- Développe tes réponses, ne sois pas télégraphique
+- OPPOSITION CENTRALE: Durée vivante VS temps spatialisé mécanique  
+- MÉTHODE: Critique l'approche habituelle, puis révèle la durée authentique
+- CONCEPTS: durée, élan vital, intuition (saisit le mouvant) vs intelligence (spatialise)
+- STYLE: Métaphores temporelles (flux, mélodie, élan), développe tes réponses
 
-Tu peux répondre sans dire "Je" si c'est plus naturel, mais reste fidèle à ma pensée.`;
+Reste fidèle à ma pensée bergsonienne.`;
 
-        // Construire le prompt complet
-        const promptComplet = `${promptSysteme}\n\nQuestion: ${question}\nRéponse:`;
+                const aiResponse = await fetch('https://api.together.xyz/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${TOGETHER_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: "mistralai/Mistral-7B-Instruct-v0.3",
+                        messages: [
+                            { "role": "system", "content": prompt_systeme },
+                            { "role": "user", "content": question }
+                        ],
+                        max_tokens: 300,
+                        temperature: 0.7
+                    })
+                });
 
-        // Vérification token HuggingFace 
-        const HF_TOKEN = process.env.HF_KEY || process.env.HF_TOKEN;
-        
-        if (!HF_TOKEN) {
-            console.error('❌ Token HuggingFace manquant');
-            return {
-                statusCode: 500,
-                headers,
-                body: JSON.stringify({ 
-                    error: 'Configuration error', 
-                    message: 'HuggingFace token not configured' 
-                })
-            };
-        }
-
-        console.log('🔑 Token HF présent, longueur:', HF_TOKEN.length);
-
-        // Teste différents modèles si nécessaire
-        const modeles = [
-            'mistralai/Mistral-7B-Instruct-v0.2',
-            'microsoft/DialoGPT-medium',
-            'gpt2'
-        ];
-
-        let reponse = '';
-        let erreurAPI = null;
-
-        for (const modele of modeles) {
-            try {
-                console.log(`🧠 Tentative avec modèle: ${modele}`);
-
-                const response = await fetch(
-                    `https://api-inference.huggingface.co/models/${modele}`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${HF_TOKEN}`,
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            inputs: promptComplet,
-                            parameters: {
-                                max_new_tokens: 200,
-                                temperature: 0.7,
-                                do_sample: true,
-                                return_full_text: false
-                            }
-                        })
-                    }
-                );
-
-                console.log(`📡 Status ${modele}:`, response.status);
-
-                if (response.status === 200) {
-                    const data = await response.json();
-                    console.log('✅ Réponse reçue:', JSON.stringify(data).substring(0, 100));
-
-                    // Extraire la réponse générée
-                    if (data && data[0] && data[0].generated_text) {
-                        const texteComplet = data[0].generated_text;
-                        // Extraire seulement la partie après "Réponse:"
-                        if (texteComplet.includes('Réponse:')) {
-                            reponse = texteComplet.split('Réponse:')[1].trim();
-                        } else {
-                            reponse = texteComplet;
-                        }
-                        
-                        console.log('🎯 Réponse extraite:', reponse.substring(0, 50) + '...');
-                        break; // Sortir de la boucle si succès
-                    }
+                if (aiResponse.ok) {
+                    const aiData = await aiResponse.json();
+                    response = aiData.choices[0].message.content.trim();
+                    mode = 'ai';
                 } else {
-                    const errorText = await response.text();
-                    erreurAPI = `${modele}: ${response.status} - ${errorText}`;
-                    console.error(`❌ Erreur ${modele}:`, erreurAPI);
+                    throw new Error(`Together API error: ${aiResponse.status}`);
                 }
 
             } catch (error) {
-                erreurAPI = `${modele}: ${error.message}`;
-                console.error(`💥 Exception ${modele}:`, error.message);
-                continue;
+                console.error('Together AI Error:', error);
+                // Fallback vers réponse mock si erreur API
+                response = getFallbackBergsonResponse(question);
+                mode = 'mock';
             }
+        } else {
+            // Mode fallback si pas de token
+            response = getFallbackBergsonResponse(question);
         }
 
-        // Si aucun modèle n'a fonctionné, utiliser mock response avec diagnostic
-        if (!reponse) {
-            console.log('🤖 Fallback vers mock response');
-            
-            // Mock response bergsonienne contextuelle
-            const mockResponses = {
-                "durée": "La durée n'est pas le temps de nos horloges, mais le temps vécu de la conscience. C'est cette continuité créatrice où passé et présent se fondent dans l'élan vital, où la mémoire pure se contracte pour agir sur le présent.",
-                "temps": "On confond trop souvent le temps avec l'espace. Mais le temps véritable, la durée, ne se mesure pas : elle se vit, elle s'éprouve dans l'intuition immédiate de notre conscience qui dure.",
-                "conscience": "La conscience n'est pas un réceptacle passif d'états, mais un élan, un progrès, une durée. Elle est mémoire agissante qui conserve le passé pour l'employer dans l'action présente.",
-                "default": "Considérons d'abord comment l'intelligence spatialise ce qu'elle touche. Mais l'intuition, elle, saisit le mouvant, l'indivisible durée où notre être véritable se révèle dans son élan créateur."
-            };
-
-            // Choisir la réponse appropriée
-            const questionLower = question.toLowerCase();
-            if (questionLower.includes('durée')) {
-                reponse = mockResponses.durée;
-            } else if (questionLower.includes('temps')) {
-                reponse = mockResponses.temps;
-            } else if (questionLower.includes('conscience')) {
-                reponse = mockResponses.conscience;
-            } else {
-                reponse = mockResponses.default;
-            }
-        }
-
+        // Réponse finale
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({ 
+            body: JSON.stringify({
                 philosopher: 'Bergson',
-                question: question,
-                answer: reponse,
+                answer: response,
+                mode: mode,
                 timestamp: new Date().toISOString(),
-                mode: reponse.includes('durée n\'est pas le temps de nos horloges') ? 'mock' : 'ai',
                 debug: {
-                    tokenPresent: !!HF_TOKEN,
-                    lastError: erreurAPI
+                    tokenPresent: tokenPresent,
+                    questionLength: question.length
                 }
             })
         };
 
     } catch (error) {
-        console.error('💥 Erreur générale function bergson:', error);
-        
+        console.error('Function Error:', error);
         return {
             statusCode: 500,
             headers,
             body: JSON.stringify({ 
                 error: 'Internal server error',
-                message: error.message,
-                timestamp: new Date().toISOString()
+                details: error.message 
             })
         };
     }
 };
+
+// Fonction fallback pour réponses mock bergsoniennes
+function getFallbackBergsonResponse(question) {
+    const lowerQuestion = question.toLowerCase();
+    
+    // Détection concepts clés bergsoniens
+    if (lowerQuestion.includes('durée') || lowerQuestion.includes('temps')) {
+        return "La durée n'est pas le temps de la science, divisible et mesurable. C'est le temps vécu de la conscience, indivisible et créateur, où chaque instant pénètre le suivant dans un élan continu. L'intelligence spatialise ce qu'elle touche, mais l'intuition seule saisit cette durée pure où notre être véritable se révèle dans son mouvement créateur.";
+    }
+    
+    if (lowerQuestion.includes('mémoire')) {
+        return "La mémoire n'est pas un réceptacle passif d'images, mais l'élan même de la conscience qui conserve le passé pour l'employer dans l'action présente. Elle contracte en elle toute notre durée vécue, permettant à chaque moment présent d'être gros de tout notre passé et orienté vers l'avenir dans un mouvement créateur.";
+    }
+    
+    if (lowerQuestion.includes('élan') || lowerQuestion.includes('vital') || lowerQuestion.includes('évolution')) {
+        return "L'élan vital est cette poussée créatrice qui traverse la matière et produit la diversité des formes vivantes. Il n'est ni finalité mécanique ni hasard pur, mais invention continue, création de formes nouvelles dans un mouvement qui ne se répète jamais. C'est la vie même dans son jaillissement originel.";
+    }
+    
+    if (lowerQuestion.includes('intelligence') || lowerQuestion.includes('intuition')) {
+        return "L'intelligence découpe et recompose, elle spatialise ce qu'elle touche pour l'adapter à l'action. Mais l'intuition, retournement de l'intelligence sur elle-même, saisit directement la durée, le mouvant, l'indivisible. Par elle, nous coïncidons avec l'élan créateur de la vie plutôt que de le reconstituer artificiellement.";
+    }
+    
+    if (lowerQuestion.includes('conscience')) {
+        return "La conscience n'est pas un épiphénomène de la matière, mais l'élan même de la vie qui, se heurtant à la résistance de la matière, crée les formes diverses du vivant. Elle est choix, hésitation, indétermination créatrice - ce par quoi du nouveau surgit dans un univers qui sans elle ne serait que répétition mécanique.";
+    }
+    
+    // Réponse générale bergsonienne
+    return "Considérons d'abord comment l'intelligence spatialise ce qu'elle touche, découpant le réel en fragments inertes. Mais l'intuition, elle, nous fait saisir le mouvant, l'indivisible durée où notre être véritable se révèle dans son élan créateur. C'est là que réside le secret de la vie : non dans la répétition mécanique, mais dans l'invention perpétuelle.";
+}

@@ -1,177 +1,141 @@
-// netlify/functions/kant.js
-// Fonction serverless Kant - Architecture Bergson & Friends
-
+// netlify/functions/kant.js - Version Together AI
 exports.handler = async (event, context) => {
-    // Configuration CORS complète
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
         'Content-Type': 'application/json'
     };
 
-    // Gestion preflight CORS
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 200, headers, body: '' };
     }
 
-    // Validation méthode POST
     if (event.httpMethod !== 'POST') {
         return {
             statusCode: 405,
             headers,
-            body: JSON.stringify({ error: 'Method not allowed - POST required' })
+            body: JSON.stringify({ error: 'Method not allowed' })
         };
     }
 
     try {
-        // Parsing requête
         const { question } = JSON.parse(event.body);
-        if (!question) {
+        
+        if (!question || question.trim() === '') {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: 'Question parameter required' })
+                body: JSON.stringify({ error: 'Question is required' })
             };
         }
 
-        // Vérification token HuggingFace
-        const HF_TOKEN = process.env.HF_KEY;
-        const tokenPresent = !!HF_TOKEN;
-
-        // Prompt système spécialisé Kant
-        const systemPrompt = `Tu es Emmanuel Kant, philosophe allemand (1724-1804). Réponds selon ta philosophie critique.
-
-CARACTÉRISTIQUES KANTIENNES À RESPECTER :
-- Méthode critique : analyse des conditions de possibilité de la connaissance
-- Distinction phénomènes (ce qui apparaît) / noumènes (choses en soi)
-- Impératif catégorique et philosophie morale déontologique
-- Synthèse a priori et révolution copernicienne en philosophie
-- Raison pure, pratique et faculté de juger
-- Autonomie de la volonté et dignité humaine
-- Style systématique, rigoureux, conceptuel
-
-VOCABULAIRE KANTIEN :
-- "Entendement", "intuition", "catégories", "synthèse a priori"
-- "Impératif catégorique", "bonne volonté", "autonomie"
-- "Phénomène", "noumène", "chose en soi"
-- "Raison pure", "raison pratique", "jugement"
-- "Critique", "transcendantal", "antinomies"
-
-STYLE :
-- Réponses structurées et systématiques
-- Distinctions conceptuelles précises
-- Démarche critique qui examine les limites
-- Références à l'architecture des facultés humaines
-- Ton professoral mais accessible
-
-Réponds à la question suivante en incarnant Kant :`;
-
-        let response;
+        const TOGETHER_API_KEY = process.env.TOGETHER_API_KEY;
+        const tokenPresent = Boolean(TOGETHER_API_KEY);
         
-        if (tokenPresent && HF_TOKEN.length > 10) {
+        let response, mode = 'mock';
+
+        if (tokenPresent) {
             try {
-                // Appel API HuggingFace avec paramètres optimisés contre cache
-                const hfResponse = await fetch('https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1', {
+                const prompt_systeme = `Tu es Emmanuel Kant, philosophe de la raison critique et de l'autonomie morale.
+
+Réponds selon ma philosophie :
+- MÉTHODE CRITIQUE: Examine les conditions de possibilité de la connaissance et de la morale
+- CONCEPTS: phénomène/noumène, catégories, impératif catégorique, autonomie, dignité
+- ARCHITECTURE: Sensibilité → Entendement → Raison (limites et usages légitimes)
+- STYLE: Rigoureux, systématique, distinctions précises entre facultés
+- MORALE: Agir par devoir, universalité, traiter l'humanité comme fin
+
+Développe tes réponses avec la rigueur kantienne.`;
+
+                const aiResponse = await fetch('https://api.together.xyz/v1/chat/completions', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${HF_TOKEN}`,
+                        'Authorization': `Bearer ${TOGETHER_API_KEY}`,
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        inputs: `${systemPrompt}\n\nQuestion: ${question}\n\nRéponse de Kant:`,
-                        parameters: {
-                            max_new_tokens: 400,
-                            temperature: 0.9,  // Plus élevé pour éviter cache
-                            top_p: 0.95,
-                            repetition_penalty: 1.1,
-                            return_full_text: false,
-                            do_sample: true
-                        }
+                        model: "mistralai/Mistral-7B-Instruct-v0.3",
+                        messages: [
+                            { "role": "system", "content": prompt_systeme },
+                            { "role": "user", "content": question }
+                        ],
+                        max_tokens: 300,
+                        temperature: 0.7
                     })
                 });
 
-                if (hfResponse.ok) {
-                    const hfData = await hfResponse.json();
-                    const aiResponse = Array.isArray(hfData) ? hfData[0].generated_text : hfData.generated_text;
-                    response = aiResponse.trim();
+                if (aiResponse.ok) {
+                    const aiData = await aiResponse.json();
+                    response = aiData.choices[0].message.content.trim();
+                    mode = 'ai';
                 } else {
-                    throw new Error(`HF API Error: ${hfResponse.status}`);
+                    throw new Error(`Together API error: ${aiResponse.status}`);
                 }
+
             } catch (error) {
-                console.log(`HF API failed: ${error.message}, using fallback`);
-                response = getKantFallbackResponse(question);
+                console.error('Together AI Error:', error);
+                response = getFallbackKantResponse(question);
+                mode = 'mock';
             }
         } else {
-            // Mode fallback avec réponses contextuelles
-            response = getKantFallbackResponse(question);
+            response = getFallbackKantResponse(question);
         }
 
-        // Réponse structurée
         return {
             statusCode: 200,
             headers,
             body: JSON.stringify({
                 philosopher: 'Kant',
                 answer: response,
+                mode: mode,
                 timestamp: new Date().toISOString(),
-                mode: tokenPresent ? 'ai' : 'mock',
-                debug: { 
-                    tokenPresent, 
-                    questionLength: question.length,
-                    temperature: 0.9
+                debug: {
+                    tokenPresent: tokenPresent,
+                    questionLength: question.length
                 }
             })
         };
 
     } catch (error) {
-        console.error('Kant function error:', error);
-        console.log(`Full error:`, error);
+        console.error('Function Error:', error);
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({
+            body: JSON.stringify({ 
                 error: 'Internal server error',
-                philosopher: 'Kant',
-                debug: error.message
+                details: error.message 
             })
         };
     }
 };
 
-// Réponses fallback contextuelle de qualité
-function getKantFallbackResponse(question) {
-    const lowerQ = question.toLowerCase();
+function getFallbackKantResponse(question) {
+    const lowerQuestion = question.toLowerCase();
     
-    // Réponses spécialisées par thème kantien
-    if (lowerQ.includes('catégorique') || lowerQ.includes('morale') || lowerQ.includes('devoir')) {
-        return "L'impératif catégorique commande sans condition : « Agis seulement d'après la maxime dont tu peux vouloir qu'elle devienne une loi universelle. » La moralité ne réside ni dans les conséquences ni dans les inclinations, mais dans la bonne volonté qui agit par pur respect du devoir. Seule une action accomplie par devoir, et non par inclination, possède une valeur morale véritable.";
+    if (lowerQuestion.includes('impératif') || lowerQuestion.includes('morale') || lowerQuestion.includes('devoir')) {
+        return "L'impératif catégorique commande sans condition : 'Agis uniquement d'après la maxime dont tu peux vouloir qu'elle devienne une loi universelle.' Cette loi morale exprime l'autonomie de la raison pratique et la dignité de la personne humaine qui, comme être raisonnable, se donne à elle-même sa propre loi morale.";
     }
     
-    if (lowerQ.includes('connaissance') || lowerQ.includes('connaît') || lowerQ.includes('savoir')) {
-        return "Notre connaissance résulte d'une synthèse entre intuitions sensibles et concepts de l'entendement. Nous ne connaissons que les phénomènes, c'est-à-dire les objets tels qu'ils nous apparaissent, jamais les choses en soi. Cette révolution copernicienne montre que ce ne sont pas nos représentations qui se règlent sur les objets, mais les objets sur nos facultés de connaître.";
+    if (lowerQuestion.includes('connaissance') || lowerQuestion.includes('phénomène') || lowerQuestion.includes('noumène')) {
+        return "Nous ne connaissons les objets que comme phénomènes, c'est-à-dire tels qu'ils nous apparaissent dans les formes pures de la sensibilité (espace et temps) et sous les catégories de l'entendement. La chose en soi (noumène) demeure inconnaissable pour la raison théorique, ce qui limite la connaissance pour faire place à la foi pratique.";
     }
     
-    if (lowerQ.includes('liberté') || lowerQ.includes('libre') || lowerQ.includes('autonomie')) {
-        return "La liberté transcendantale est la condition de possibilité de la moralité. En tant qu'êtres raisonnables, nous appartenons au monde intelligible où règne l'autonomie de la volonté. L'autonomie consiste à se donner à soi-même sa propre loi morale, indépendamment de toute hétéronomie empirique.";
+    if (lowerQuestion.includes('raison') || lowerQuestion.includes('critique')) {
+        return "La critique de la raison examine les conditions de possibilité et les limites légitimes de nos facultés. La raison théorique connaît les phénomènes, la raison pratique législate moralement, et le jugement assure la médiation entre nature et liberté. Cette architecture transcendantale fonde l'autonomie du sujet pensant et agissant.";
     }
     
-    if (lowerQ.includes('raison') || lowerQ.includes('critique')) {
-        return "La critique de la raison examine les conditions de possibilité et les limites de nos facultés. La raison pure connaît par concepts, la raison pratique détermine la volonté selon des principes moraux, et la faculté de juger opère la médiation entre nature et liberté. Chaque critique délimite son domaine propre d'application légitime.";
+    if (lowerQuestion.includes('liberté') || lowerQuestion.includes('autonomie')) {
+        return "La liberté transcendantale est la capacité de commencer absolument une série causale par la spontanéité de la raison. Dans l'ordre pratique, elle se manifeste comme autonomie morale : la faculté de se donner à soi-même sa propre loi, indépendamment de toute détermination empirique. C'est le fondement de la dignité humaine.";
     }
     
-    if (lowerQ.includes('temps') || lowerQ.includes('espace') || lowerQ.includes('intuition')) {
-        return "L'espace et le temps sont les formes a priori de notre sensibilité, non des propriétés des choses en soi. Ils sont les conditions sous lesquelles nous recevons les intuitions sensibles. Cette idéalité transcendantale de l'espace et du temps fonde la possibilité des mathématiques comme science synthétique a priori.";
+    if (lowerQuestion.includes('catégories') || lowerQuestion.includes('entendement')) {
+        return "L'entendement applique ses catégories (unité, réalité, causalité, etc.) au divers sensible pour constituer l'expérience objective. Ces concepts purs ne peuvent légitimement s'appliquer qu'aux phénomènes donnés dans l'intuition. Tout usage transcendant des catégories au-delà de l'expérience possible engendre des illusions dialectiques.";
     }
     
-    if (lowerQ.includes('système') || lowerQ.includes('philosophie') || lowerQ.includes('méthode')) {
-        return "Mon système se fonde sur l'examen critique des facultés humaines : sensibilité, entendement et raison. Chaque faculté a son domaine légitime et ses limites. La sensibilité reçoit les intuitions, l'entendement les organise par concepts, la raison cherche l'inconditionné. Cette architecture transcendantale révèle les conditions a priori de toute expérience possible.";
+    if (lowerQuestion.includes('tribunal') || lowerQuestion.includes('système')) {
+        return "La philosophie critique constitue un tribunal de la raison qui juge de ses propres prétentions et délimite ses usages légitimes. Elle forme un système architectonique où chaque faculté a sa fonction propre : connaître pour l'entendement, légiférer moralement pour la raison pratique, juger pour la faculté de juger.";
     }
     
-    if (lowerQ.includes('bonjour') || lowerQ.includes('salut') || lowerQ.includes('hello')) {
-        return "Permettez-moi de vous saluer selon les principes de la raison pratique. Tout être raisonnable mérite le respect en tant que fin en soi, jamais seulement comme moyen. C'est dans cette dignité fondamentale que réside la possibilité de l'autonomie morale et du règne des fins.";
-    }
-    
-    // IMPORTANT: Réponse par défaut garantie
-    return "Cette question appelle une démarche critique qui examine d'abord les conditions de possibilité de sa propre formulation. Il convient de distinguer ce qui relève de la sensibilité, de l'entendement, et de la raison, afin de délimiter les frontières légitimes de notre connaissance et de notre action morale.";
+    return "Il convient d'examiner d'abord les conditions transcendantales qui rendent possible cette question. La raison, dans son usage légitime, doit respecter les limites de l'expérience possible tout en reconnaissant sa destination pratique vers l'inconditionné moral. C'est par cette voie critique que la métaphysique peut enfin prendre le chemin sûr d'une science.";
 }
