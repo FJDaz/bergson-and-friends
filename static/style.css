@@ -240,3 +240,139 @@ textarea {
     border-top: 2px solid #eee;
     border-radius: 0 0 8px 8px;
 }
+/* === RESPONSIVE MOBILE */
+
+@media (max-width: 768px) {
+     body { background: red !important; }
+    /* Header adaptatif */
+    header {
+        width: 90%;
+        padding: 1rem;
+    }
+    
+    header img {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    /* Main en colonne */
+    main {
+        padding: 1rem;
+    }
+    
+    /* Philosophes en layout vertical */
+    .philosophers {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    /* Philosophe par défaut - format réduit */
+    .philosopher {
+        width: 100%;
+        max-width: 300px;
+        transition: all 0.3s ease;
+    }
+    
+    /* Philosophe actif - remonte en haut et grossit */
+    .philosopher.active {
+        order: -1;
+        transform: scale(3);
+        transform-origin: center top;
+        margin-bottom: 2rem; /* Espace pour éviter collision */
+        z-index: 10;
+        position: relative;
+    }
+    
+    /* Désactiver le flip image sur mobile */
+    .philosopher.active img {
+        transform: none !important;
+    }
+    
+    /* Dialogue mobile - adapté au container */
+    .dialogue {
+        width: 90vw;
+        max-width: 400px;
+        font-size: 0.9em;
+        margin-top: 0.5rem;
+    }
+    
+    /* Textarea mobile-friendly */
+    .qa-form textarea {
+        min-height: 80px;
+        font-size: 16px; /* Évite zoom iOS */
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+    }
+    
+    /* Bouton submit plus gros pour tactile */
+    input[type="image"] {
+        width: 2em;
+        height: 2em;
+        margin-top: 8px;
+    }
+    
+    /* Historique Q/A optimisé mobile */
+    .qa-history {
+        max-height: 250px;
+        font-size: 0.85em;
+    }
+    
+    .qa-pair {
+        padding: 10px;
+        margin-bottom: 12px;
+    }
+    
+    /* Titles plus petits sur mobile */
+    .philosopher h2 {
+        font-size: 1.2em;
+        margin: 0.5rem 0;
+    }
+    
+    /* Philosophes non-actifs - format compact */
+    .philosopher:not(.active) {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 0.5rem;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+    }
+    
+    .philosopher:not(.active) .philosopher-trigger {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        width: 100%;
+    }
+    
+    .philosopher:not(.active) img {
+        width: 60px;
+        height: 60px;
+        margin: 0;
+    }
+    
+    .philosopher:not(.active) h2 {
+        margin: 0;
+        text-align: left;
+    }
+    
+    /* Focus states améliorés pour mobile */
+    .philosopher-trigger:focus,
+    textarea:focus,
+    input[type="image"]:focus {
+        outline: 3px solid #0066cc;
+        outline-offset: 2px;
+    }
+    
+    /* Prévention débordement */
+    * {
+        box-sizing: border-box;
+    }
+    
+    body {
+        overflow-x: hidden;
+    }
+}
