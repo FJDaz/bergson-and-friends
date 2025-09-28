@@ -98,26 +98,50 @@
     <!-- Zone conversation mobile - apparaît quand un philosophe est sélectionné -->
     <section class="mobile-conversation" id="mobile-conversation" style="display: none;">
       
-      <!-- Philosophe actif en grand -->
+      <!-- Philosophe actif en haut -->
       <div class="mobile-active-philosopher">
         <img id="mobile-active-img" src="" alt="">
         <h2 id="mobile-active-name"></h2>
-        <p class="mobile-greeting">Bonjour, cher ami. De quel problème désirez-vous que nous nous entretenions ?</p>
       </div>
       
-      <!-- Historique Q/A -->
-      <div class="mobile-qa-history" id="mobile-qa-history">
-        <!-- Les Q/A apparaîtront ici dynamiquement -->
+      <!-- Contenu principal : philosophes à gauche + conversation à droite -->
+      <div class="mobile-conversation-content">
+        
+        <!-- Philosophes vacants à gauche -->
+        <div class="mobile-philosophers">
+          <article class="mobile-philosopher" id="mobile-kant-vacant" data-philosopher="kant">
+            <button class="mobile-philosopher-trigger">
+              <img src="https://fjdaz.com/bergson/statics/img/Kant.png" alt="Immanuel Kant">
+              <span>Kant</span>
+            </button>
+          </article>
+          
+          <article class="mobile-philosopher" id="mobile-spinoza-vacant" data-philosopher="spinoza">
+            <button class="mobile-philosopher-trigger">
+              <img src="https://fjdaz.com/bergson/statics/img/Spinoza.png" alt="Baruch Spinoza">
+              <span>Spinoza</span>
+            </button>
+          </article>
+        </div>
+        
+        <!-- Zone conversation à droite -->
+        <div class="mobile-conversation-right">
+          <!-- Greeting initial -->
+          <div class="mobile-greeting">Bonjour, cher ami. De quel problème désirez-vous que nous nous entretenions ?</div>
+          
+          <!-- Historique Q/A -->
+          <div class="mobile-qa-history" id="mobile-qa-history">
+            <!-- Les Q/A apparaîtront ici dynamiquement -->
+          </div>
+          
+          <!-- Formulaire -->
+          <form class="mobile-qa-form" id="mobile-qa-form">
+            <textarea placeholder="Posez votre question..." rows="3"></textarea>
+            <button type="submit">Envoyer</button>
+          </form>
+        </div>
+        
       </div>
-      
-      <!-- Formulaire -->
-      <form class="mobile-qa-form" id="mobile-qa-form">
-        <textarea placeholder="Posez votre question..." rows="3"></textarea>
-        <button type="submit">Envoyer</button>
-      </form>
-      
-      <!-- Bouton retour à la liste -->
-      <button class="mobile-back-button" id="mobile-back-button">← Choisir un autre philosophe</button>
       
     </section>
   </main>
