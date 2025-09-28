@@ -180,7 +180,9 @@ main {
     margin-bottom: 0.5rem;
 }
 h2 span {
-    font-weight: 700
+    font-weight: 700;
+    display: inline;
+    visibility: visible;
 }
 input[type=image] {
     width: 1em;
