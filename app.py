@@ -245,12 +245,10 @@ class PhilosophesManager:
             base_model_id = "Qwen/Qwen2.5-14B-Instruct"
             lora_adapter = "FJDaz/qwen-spinoza-niveau-b"
             
-            # Configuration quantization 4-bit (OBLIGATOIRE pour A10G)
+            # Configuration quantization 8-bit
             quantization_config = BitsAndBytesConfig(
-                load_in_4bit=True,
-                bnb_4bit_compute_dtype=torch.float16,
-                bnb_4bit_use_double_quant=True,
-                bnb_4bit_quant_type="nf4"
+                load_in_8bit=True,  # ← SOLUTION
+                bnb_8bit_compute_dtype=torch.float16
             )
             
             # Import PEFT pour LoRA
