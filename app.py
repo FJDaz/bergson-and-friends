@@ -218,10 +218,10 @@ class PhilosophesManager:
     def __init__(self):
         print("🚀 Initialisation manager philosophes...")
         
-        # Chargement modèle
-        self.model, self.tokenizer, self.device = self._charger_mistral()
+        # Chargement modèle Qwen + LoRA
+        self.model, self.tokenizer, self.device = self._charger_qwen_lora()
         if not self.model:
-            raise Exception("Échec chargement Mistral")
+            raise Exception("Échec chargement Qwen + LoRA")
         
         # Encoder pour RAG
         self.encoder = SentenceTransformer('all-MiniLM-L6-v2')
@@ -234,13 +234,18 @@ class PhilosophesManager:
         self.philosophe_actif = None
         self.crash_detector = CrashDetector()
         
-        print("✅ Manager philosophes prêt")
+        print("✅ Manager philosophes prêt avec Qwen + LoRA")
     
-    def _charger_mistral(self):
-        """Chargement Mistral 7B optimisé pour HF Spaces"""
+    def _charger_qwen_lora(self):
+        """Chargement Qwen 14B + LoRA Spinoza niveau B optimisé pour HF Spaces"""
         try:
-            model_id = "mistralai/Mistral-7B-Instruct-v0.2"
+            print("🔄 Chargement Qwen 14B + LoRA Spinoza niveau B...")
             
+            # Configuration modèles
+            base_model_id = "Qwen/Qwen2.5-14B-Instruct"
+            lora_adapter = "FJDaz/qwen-spinoza-niveau-b"
+            
+            # Configuration quantization 4-bit (OBLIGATOIRE pour A10G)
             quantization_config = BitsAndBytesConfig(
                 load_in_4bit=True,
                 bnb_4bit_compute_dtype=torch.float16,
@@ -248,23 +253,52 @@ class PhilosophesManager:
                 bnb_4bit_quant_type="nf4"
             )
             
-            model = AutoModelForCausalLM.from_pretrained(
-                model_id,
+            # Import PEFT pour LoRA
+            from peft import PeftModel
+            
+            print(f"📦 Chargement modèle base: {base_model_id}")
+            
+            # 1. Charger modèle base Qwen
+            base_model = AutoModelForCausalLM.from_pretrained(
+                base_model_id,
                 quantization_config=quantization_config,
                 device_map="auto",
-                torch_dtype=torch.float16
+                torch_dtype=torch.float16,
+                trust_remote_code=True  # Nécessaire pour Qwen
             )
             
-            tokenizer = AutoTokenizer.from_pretrained(model_id)
-            tokenizer.pad_token = tokenizer.eos_token
+            print(f"🔧 Application adaptateurs LoRA: {lora_adapter}")
+            
+            # 2. Ajouter tes adaptateurs LoRA
+            model = PeftModel.from_pretrained(base_model, lora_adapter)
+            
+            print("🔤 Chargement tokenizer Qwen...")
+            
+            # 3. Tokenizer de Qwen (pas Mistral!)
+            tokenizer = AutoTokenizer.from_pretrained(base_model_id, trust_remote_code=True)
+            
+            # Configuration tokenizer
+            if tokenizer.pad_token is None:
+                tokenizer.pad_token = tokenizer.eos_token
             
             device = next(model.parameters()).device
             
-            print(f"✅ Mistral chargé sur {device}")
+            print(f"✅ Qwen 14B + LoRA Spinoza chargé sur {device}")
+            
+            # Vérification mémoire
+            if torch.cuda.is_available():
+                memory_used = torch.cuda.memory_allocated(0) / 1e9
+                memory_total = torch.cuda.get_device_properties(0).total_memory / 1e9
+                print(f"💾 Mémoire GPU: {memory_used:.2f}GB / {memory_total:.2f}GB")
+            
             return model, tokenizer, device
             
         except Exception as e:
-            print(f"❌ Erreur chargement Mistral: {e}")
+            print(f"❌ Erreur chargement Qwen + LoRA: {e}")
+            print("💡 Solutions possibles:")
+            print("  - Vérifier que FJDaz/qwen-spinoza-niveau-b existe")
+            print("  - Redémarrer le Space si OOM")
+            print("  - Fallback vers Mistral si problème critique")
             return None, None, None
     
     def _initialiser_corpus(self):
