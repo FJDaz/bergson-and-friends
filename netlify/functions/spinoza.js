@@ -64,8 +64,24 @@ exports.handler = async (event) => {
             history: []
         });
 
-        const textReply = Array.isArray(result) ? result[0] : String(result ?? "");
-        let spinozaResponse = (textReply || "Je réfléchis à votre question...").toString();
+        const outputArray = Array.isArray(result)
+            ? result
+            : Array.isArray(result?.data)
+                ? result.data
+                : [];
+
+        let textReply = outputArray[0];
+        if (textReply && typeof textReply === 'object') {
+            textReply = textReply.text ?? textReply.message ?? JSON.stringify(textReply);
+        }
+        if (typeof textReply !== 'string') {
+            textReply = String(textReply ?? '');
+        }
+
+        let spinozaResponse = textReply.trim();
+        if (!spinozaResponse) {
+            spinozaResponse = "Je réfléchis à ta question...";
+        }
 
             return {
                 statusCode: 200,
