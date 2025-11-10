@@ -8,184 +8,577 @@
 <link rel="stylesheet" href="https://fjdaz.com/bergson/statics/responsive.css" media="screen and (max-width: 768px)">
 </head>
 <body>
-  <div class="desktop-version">
-<header> <img src="https://fjdaz.com/bergson/statics/img/BergsonAndFriendsLOGO.png"> </header>
-<main>
-  <section class="philosophers"> 
-    
-    <!-- Philosophe 1 -->
-    <article class="philosopher" id="bergson">
-      <button class="philosopher-trigger">
-      <h2>Henri <span>Bergson</span></h2>
-      <img src="https://fjdaz.com/bergson/statics/img/Bergson.png" alt="Henri Bergson"> </button>
-      <div class="dialogue" hidden>
-        <div class="qa-history"></div>
-        <form class="qa-form">
-          <textarea id="question-bergson" name="question"></textarea>
-          <input type="image" src="https://fjdaz.com/bergson/statics/img/Submit.png" alt="envoyer">
-        </form>
-      </div>
-    </article>
-    
-    <!-- Philosophe 2 -->
-    <article class="philosopher" id="kant">
-      <button class="philosopher-trigger">
-      <h2>Immanuel <span>Kant</span></h2>
-      <img src="https://fjdaz.com/bergson/statics/img/Kant.png" alt="Immanuel Kant"> </button>
-      <div class="dialogue" hidden>
-        <div class="qa-history"></div>
-        <form class="qa-form">
-          <textarea id="question-kant" name="question"></textarea>
-          <input type="image" src="https://fjdaz.com/bergson/statics/img/Submit.png" alt="envoyer">
-        </form>
-      </div>
-    </article>
-    
-    <!-- Philosophe 3 -->
-    <article class="philosopher" id="spinoza">
-      <button class="philosopher-trigger">
-      <h2>Baruch <span>Spinoza</span></h2>
-      <img src="https://fjdaz.com/bergson/statics/img/Spinoza.png" alt="Baruch Spinoza"> </button>
-      <div class="dialogue" hidden>
-        <div class="qa-history"></div>
-        <form class="qa-form">
-          <textarea id="question-spinoza" name="question"></textarea>
-          <input type="image" src="https://fjdaz.com/bergson/statics/img/Submit.png" alt="envoyer">
-        </form>
-      </div>
-    </article>
-  </section>
-</main>
-</div>
-
-<!-- VERSION MOBILE DÉDIÉE - À ajouter après la version desktop -->
-
-<div class="mobile-version" style="display: none;">
-  <header>
+  <header class="site-header">
     <img src="https://fjdaz.com/bergson/statics/img/BergsonAndFriendsLOGO.png" alt="Bergson and Friends">
   </header>
   
-  <main>
-    <!-- Philosophe actif par défaut : aucun -->
-    <section class="mobile-philosophers">
-      
-      <!-- Bergson -->
-      <article class="mobile-philosopher" id="mobile-bergson" data-philosopher="bergson">
-        <button class="mobile-philosopher-trigger">
+  <main class="site-main">
+    <section class="philosopher-selector">
+      <button type="button" class="philosopher-button active" data-philosopher="spinoza">
+        <img src="https://fjdaz.com/bergson/statics/img/Spinoza.png" alt="Baruch Spinoza">
+        <span>Baruch Spinoza</span>
+      </button>
+      <button type="button" class="philosopher-button" data-philosopher="bergson">
           <img src="https://fjdaz.com/bergson/statics/img/Bergson.png" alt="Henri Bergson">
           <span>Henri Bergson</span>
         </button>
-      </article>
-      
-      <!-- Kant -->
-      <article class="mobile-philosopher" id="mobile-kant" data-philosopher="kant">
-        <button class="mobile-philosopher-trigger">
+      <button type="button" class="philosopher-button" data-philosopher="kant">
           <img src="https://fjdaz.com/bergson/statics/img/Kant.png" alt="Immanuel Kant">
           <span>Immanuel Kant</span>
         </button>
-      </article>
-      
-      <!-- Spinoza -->
-      <article class="mobile-philosopher" id="mobile-spinoza" data-philosopher="spinoza">
-        <button class="mobile-philosopher-trigger">
-          <img src="https://fjdaz.com/bergson/statics/img/Spinoza.png" alt="Baruch Spinoza">
-          <span>Baruch Spinoza</span>
-        </button>
-      </article>
-      
     </section>
     
-    <!-- Zone conversation mobile - apparaît quand un philosophe est sélectionné -->
-    <section class="mobile-conversation" id="mobile-conversation" style="display: none;">
-      
-      <!-- Philosophe actif en haut -->
-      <div class="mobile-active-philosopher">
-        <img id="mobile-active-img" src="" alt="">
-        <h2 id="mobile-active-name"></h2>
-      </div>
-      
-      <!-- Contenu principal : philosophes à gauche + conversation à droite -->
-      <div class="mobile-conversation-content">
-        
-        <!-- Philosophes vacants à gauche -->
-        <div class="mobile-philosophers">
-          <article class="mobile-philosopher" id="mobile-kant-vacant" data-philosopher="kant">
-            <button class="mobile-philosopher-trigger">
-              <img src="https://fjdaz.com/bergson/statics/img/Kant.png" alt="Immanuel Kant">
-              <span>Kant</span>
-            </button>
-          </article>
-          
-          <article class="mobile-philosopher" id="mobile-spinoza-vacant" data-philosopher="spinoza">
-            <button class="mobile-philosopher-trigger">
-              <img src="https://fjdaz.com/bergson/statics/img/Spinoza.png" alt="Baruch Spinoza">
-              <span>Spinoza</span>
-            </button>
-          </article>
+    <section class="conversation-panel">
+      <div id="loading" style="display: none;">Spinoza réfléchit...</div>
+      <div id="response-area" aria-live="polite"></div>
+
+      <form id="question-form" novalidate>
+        <textarea id="question-input" name="question" rows="4" placeholder="Posez une question à Spinoza..." required></textarea>
+        <div class="form-actions">
+          <button type="submit">Envoyer</button>
+          <button type="button" id="new-question-btn">Nouvelle question</button>
         </div>
-        
-        <!-- Zone conversation à droite -->
-        <div class="mobile-conversation-right">
-          <!-- Greeting initial -->
-          <div class="mobile-greeting">Bonjour, cher ami. De quel problème désirez-vous que nous nous entretenions ?</div>
-          
-          <!-- Historique Q/A -->
-          <div class="mobile-qa-history" id="mobile-qa-history">
-            <!-- Les Q/A apparaîtront ici dynamiquement -->
-          </div>
-          
-          <!-- Formulaire -->
-          <form class="mobile-qa-form" id="mobile-qa-form">
-            <textarea placeholder="Posez votre question..." rows="3"></textarea>
-            <button type="submit">Envoyer</button>
           </form>
-        </div>
-        
-      </div>
-      
     </section>
   </main>
-</div>
 
-<script src="https://fjdaz.com/bergson/statics/app.js"></script>
+  <div id="chat-container" hidden></div>
 
 <script>
-  // Fix définitif pour tous les philosophes
-  document.addEventListener('DOMContentLoaded', function() {
-      document.querySelectorAll('input[type="image"]').forEach(btn => {
-          btn.addEventListener('click', function(e) {
-              e.preventDefault();
-              
-              const form = this.closest('form');
-              const textarea = form.querySelector('textarea');
-              const question = textarea.value.trim();
-              
-              if (!question) return;
-              
-              const philosopherId = form.closest('.philosopher').id;
-              console.log(`Question pour ${philosopherId}:`, question);
-              
-              fetch(`/.netlify/functions/${philosopherId}`, {
+// Remplace les anciens appels API par les nouveaux vers HF Space
+
+// Variables globales
+let currentPhilosopher = 'spinoza';
+let conversationHistory = [];
+
+// Fonction principale d'appel API mise à jour
+async function callPhilosopherAPI(question, philosopher = 'spinoza') {
+    const loadingElement = document.getElementById('loading');
+    const responseArea = document.getElementById('response-area');
+
+    try {
+        // Afficher loading
+        if (loadingElement) {
+            loadingElement.style.display = 'block';
+            loadingElement.textContent = `${capitalize(philosopher)} réfléchit...`;
+        }
+
+        // URL de votre fonction Netlify correspondante
+        const functionUrl = `/.netlify/functions/${philosopher}`;
+
+        console.log(`Appel API ${philosopher}:`, question);
+
+        // Appel à la fonction Netlify
+        const response = await fetch(functionUrl, {
                   method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ question })
-              })
-              .then(r => r.json())
-              .then(data => {
-                  const history = form.parentElement.querySelector('.qa-history');
-                  history.innerHTML += `
-                      <div style="margin: 10px 0; padding: 10px; border-left: 3px solid #ccc;">
-                          <div><strong>Q:</strong> ${question}</div>
-                          <div><strong>R:</strong> ${data.answer}</div>
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                question: question.trim()
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Erreur ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('Réponse reçue:', data);
+
+        // Masquer loading
+        if (loadingElement) {
+            loadingElement.style.display = 'none';
+        }
+
+        // Afficher la réponse
+        displayPhilosopherResponse(data, philosopher);
+
+        // Ajouter à l'historique
+        conversationHistory.push({
+            question,
+            response: data.answer,
+            philosopher,
+            timestamp: data.timestamp,
+            source: data.source
+        });
+
+        return data;
+
+    } catch (error) {
+        console.error('Erreur API:', error);
+
+        // Masquer loading
+        if (loadingElement) {
+            loadingElement.style.display = 'none';
+        }
+
+        // Afficher erreur
+        displayError(error.message, philosopher);
+
+        throw error;
+    }
+}
+
+// Fonction d'affichage des réponses
+function displayPhilosopherResponse(data, philosopher) {
+    const responseArea = document.getElementById('response-area') || document.getElementById('chat-container');
+
+    if (!responseArea) {
+        console.error('Zone de réponse non trouvée');
+        return;
+    }
+
+    // Créer le conteneur de réponse
+    const responseDiv = document.createElement('div');
+    responseDiv.className = `response-container ${philosopher}-response`;
+
+    // Header avec nom du philosophe et source
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'response-header';
+    headerDiv.innerHTML = `
+        <strong>${capitalize(philosopher)}</strong>
+        ${data.source === 'fallback' ? '<span class="fallback-indicator">(Mode local)</span>' : ''}
+        <span class="timestamp">${formatTimestamp(data.timestamp)}</span>
+    `;
+
+    // Contenu de la réponse
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'response-content';
+    contentDiv.innerHTML = formatPhilosopherText(data.answer);
+
+    // Note si fallback
+    if (data.note) {
+        const noteDiv = document.createElement('div');
+        noteDiv.className = 'response-note';
+        noteDiv.textContent = data.note;
+        responseDiv.appendChild(noteDiv);
+    }
+
+    responseDiv.appendChild(headerDiv);
+    responseDiv.appendChild(contentDiv);
+
+    // Ajouter à la zone de réponse
+    responseArea.appendChild(responseDiv);
+
+    // Scroller vers la nouvelle réponse
+    responseDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// Fonction d'affichage des erreurs
+function displayError(errorMessage, philosopher) {
+    const responseArea = document.getElementById('response-area') || document.getElementById('chat-container');
+
+    if (!responseArea) return;
+
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-container';
+    errorDiv.innerHTML = `
+        <div class="error-header">
+            <strong>Erreur ${capitalize(philosopher)}</strong>
+        </div>
+        <div class="error-content">
+            ${errorMessage}
                       </div>
                   `;
-                  textarea.value = '';
-              })
-              .catch(console.error);
+
+    responseArea.appendChild(errorDiv);
+}
+
+// Gestionnaire pour les boutons philosophes
+function setupPhilosopherButtons() {
+    const philosopherButtons = document.querySelectorAll('[data-philosopher]');
+
+    philosopherButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const philosopher = this.getAttribute('data-philosopher');
+            setCurrentPhilosopher(philosopher);
           });
       });
-  });
-</script>
+}
 
+// Sélection du philosophe actuel
+function setCurrentPhilosopher(philosopher) {
+    currentPhilosopher = philosopher;
+
+    // Mettre à jour l'interface
+    document.querySelectorAll('[data-philosopher]').forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    document.querySelector(`[data-philosopher="${philosopher}"]`)?.classList.add('active');
+
+    // Mettre à jour le placeholder ou le titre
+    const questionInput = document.getElementById('question-input');
+    if (questionInput) {
+        questionInput.placeholder = `Posez une question à ${capitalize(philosopher)}...`;
+    }
+
+    console.log('Philosophe sélectionné:', philosopher);
+}
+
+// Gestionnaire du formulaire de question
+function setupQuestionForm() {
+    const questionForm = document.getElementById('question-form');
+    const questionInput = document.getElementById('question-input');
+
+    if (questionForm && questionInput) {
+        questionForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const question = questionInput.value.trim();
+            if (!question) return;
+
+            // Afficher la question de l'utilisateur
+            displayUserQuestion(question);
+
+            // Vider le champ
+            questionInput.value = '';
+
+            // Appeler l'API
+            try {
+                await callPhilosopherAPI(question, currentPhilosopher);
+            } catch (error) {
+                console.error('Erreur lors de l\'appel API:', error);
+            }
+        });
+    }
+
+    const newQuestionBtn = document.getElementById('new-question-btn');
+    if (newQuestionBtn && questionInput) {
+        newQuestionBtn.addEventListener('click', () => {
+            questionInput.value = '';
+            questionInput.focus();
+        });
+    }
+}
+
+// Afficher la question de l'utilisateur
+function displayUserQuestion(question) {
+    const responseArea = document.getElementById('response-area') || document.getElementById('chat-container');
+
+    if (!responseArea) return;
+
+    const questionDiv = document.createElement('div');
+    questionDiv.className = 'user-question';
+    questionDiv.innerHTML = `
+        <div class="question-header">
+            <strong>Votre question</strong>
+        </div>
+        <div class="question-content">
+            ${question}
+        </div>
+    `;
+
+    responseArea.appendChild(questionDiv);
+}
+
+// Fonctions utilitaires
+function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function formatTimestamp(timestamp) {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('fr-FR', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function formatPhilosopherText(text) {
+    // Formatage basique pour améliorer l'affichage
+    return text
+        .replace(/\n/g, '<br>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>');
+}
+
+// Initialisation au chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initialisation Bergson & Friends - Version HF Space');
+
+    // Setup des boutons et formulaires
+    setupPhilosopherButtons();
+    setupQuestionForm();
+
+    // Sélectionner Spinoza par défaut (votre modèle fonctionnel)
+    setCurrentPhilosopher('spinoza');
+
+    // Message d'accueil
+    const welcomeMessage = {
+        philosopher: 'spinoza',
+        answer: 'Bonjour ! Je suis Spinoza. Posez-moi une question philosophique et explorons ensemble les voies de la connaissance rationnelle.',
+        timestamp: new Date().toISOString(),
+        source: 'welcome'
+    };
+
+    setTimeout(() => {
+        displayPhilosopherResponse(welcomeMessage, 'spinoza');
+    }, 500);
+});
+
+// CSS à ajouter dans votre fichier style existant
+const additionalCSS = `
+.site-header {
+    text-align: center;
+    padding: 30px 10px;
+}
+
+.site-header img {
+    max-width: 320px;
+    width: 100%;
+    height: auto;
+}
+
+.site-main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.philosopher-selector {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+}
+
+.philosopher-button {
+    border: none;
+    background: #f0f2f5;
+    border-radius: 12px;
+    padding: 12px 24px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    min-width: 140px;
+}
+
+.philosopher-button img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid transparent;
+}
+
+.philosopher-button span {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.philosopher-button.active {
+    background: #e8f5ff;
+    box-shadow: 0 8px 20px rgba(0, 122, 204, 0.15);
+}
+
+.philosopher-button.active img {
+    border-color: #007acc;
+}
+
+.philosopher-button:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+}
+
+.conversation-panel {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
+    padding: 24px;
+    position: relative;
+}
+
+#loading {
+    text-align: center;
+    padding: 16px;
+    font-style: italic;
+    color: #6c757d;
+}
+
+#response-area {
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.response-container {
+    margin: 20px 0;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #007acc;
+    background: #f8f9fa;
+}
+
+.spinoza-response {
+    border-left-color: #28a745;
+}
+
+.bergson-response {
+    border-left-color: #ffc107;
+}
+
+.kant-response {
+    border-left-color: #dc3545;
+}
+
+.response-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.response-content {
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.response-note {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #555;
+}
+
+.user-question {
+    margin: 20px 0;
+    padding: 10px 15px;
+    background: #e9ecef;
+    border-radius: 8px;
+    border-left: 4px solid #6c757d;
+}
+
+.question-header {
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.question-content {
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.error-container {
+    margin: 20px 0;
+    padding: 15px;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+    color: #721c24;
+}
+
+.fallback-indicator {
+    font-size: 12px;
+    color: #6c757d;
+    font-style: italic;
+    margin-left: 8px;
+}
+
+.timestamp {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+#question-form {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+#question-input {
+    width: 100%;
+    border-radius: 10px;
+    border: 1px solid #d0d5dd;
+    padding: 14px;
+    font-size: 16px;
+    resize: vertical;
+    min-height: 120px;
+}
+
+#question-input:focus {
+    outline: none;
+    border-color: #007acc;
+    box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.15);
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.form-actions button {
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.form-actions button[type="submit"] {
+    background: #007acc;
+    color: #ffffff;
+}
+
+.form-actions button[type="submit"]:hover {
+    background: #005fa3;
+}
+
+#new-question-btn {
+    background: #f0f2f5;
+    color: #333;
+}
+
+#new-question-btn:hover {
+    background: #e2e6ea;
+}
+
+@media (max-width: 768px) {
+    .site-main {
+        padding: 16px;
+    }
+
+    .philosopher-selector {
+        gap: 12px;
+    }
+
+    .philosopher-button {
+        flex: 1 1 calc(50% - 12px);
+        min-width: 120px;
+    }
+
+    .conversation-panel {
+        padding: 18px;
+    }
+
+    #response-area {
+        max-height: 360px;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .form-actions button {
+        width: 100%;
+    }
+}
+`;
+
+// Injecter le CSS
+const style = document.createElement('style');
+style.textContent = additionalCSS;
+document.head.appendChild(style);
+</script>
 </body>
 </html>
+
