@@ -10,6 +10,73 @@ function getPhilosopherLabel(id) {
   return philosopherLabels[id] || id.charAt(0).toUpperCase() + id.slice(1);
 }
 
+// Questions amorces par philosophe
+const INTRO_QUESTIONS = {
+  spinoza: [
+    "La liberté est-elle une illusion ?",
+    "Peut-on maîtriser nos émotions ?",
+    "Sommes-nous esclaves de nos désirs ?",
+    "La connaissance rend-elle libre ?",
+    "La joie accroît-elle notre puissance d'agir ?"
+  ],
+  bergson: [
+    "Le temps intérieur peut-il se mesurer ?",
+    "La durée est-elle la vraie nature du temps ?",
+    "L'intuition dépasse-t-elle l'intelligence ?",
+    "La conscience crée-t-elle le réel ?",
+    "Peut-on saisir le mouvement autrement que par l'intellect ?"
+  ],
+  kant: [
+    "Que puis-je savoir avec certitude ?",
+    "Sommes-nous libres dans un monde déterminé ?",
+    "L'impératif catégorique peut-il guider toutes nos actions ?",
+    "L'expérience suffit-elle à fonder la connaissance ?",
+    "La raison a-t-elle des limites ?"
+  ],
+  default: [
+    "Quelle question philosophique t'intrigue aujourd'hui ?"
+  ]
+};
+
+const INTRO_TEMPLATES = {
+  spinoza: (question) => `Bonjour ! Je suis Spinoza. Discutons ensemble de cette question : <strong>${question}</strong>.<br><br>Qu'en penses-tu ?`,
+  bergson: (question) => `Salut ! Je suis Bergson. Plongeons dans cette intuition : <strong>${question}</strong>.<br><br>Quel est ton ressenti ?`,
+  kant: (question) => `Bonjour, je suis Kant. Examinons ce problème critique : <strong>${question}</strong>.<br><br>Quelle est ta position ?`,
+  default: (question, label) => `Bonjour ! Je suis ${label}. Explorons ensemble : <strong>${question}</strong>.`
+};
+
+function pickIntroQuestion(philosopherId) {
+  const list = INTRO_QUESTIONS[philosopherId] || INTRO_QUESTIONS.default;
+  if (!list || list.length === 0) {
+    return "Quelle question philosophique souhaites-tu explorer ?";
+  }
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function getIntroMessage(philosopherId) {
+  const label = getPhilosopherLabel(philosopherId);
+  const question = pickIntroQuestion(philosopherId);
+  const template = INTRO_TEMPLATES[philosopherId] || ((q) => INTRO_TEMPLATES.default(q, label));
+  return {
+    question,
+    html: template(question, label),
+    label
+  };
+}
+
+function injectDesktopIntro(philosopherId, qaHistory) {
+  if (!qaHistory || qaHistory.dataset.introInjected === 'true') {
+    return;
+  }
+  const intro = getIntroMessage(philosopherId);
+  const introBlock = document.createElement('div');
+  introBlock.className = 'qa-pair intro';
+  introBlock.innerHTML = `<div class="answer"><strong>${intro.label} :</strong> ${intro.html}</div>`;
+  qaHistory.appendChild(introBlock);
+  qaHistory.dataset.introInjected = 'true';
+  qaHistory.style.display = 'block';
+}
+
 // === DÉTECTION MOBILE ===
 function isMobile() {
     return window.innerWidth <= 768;
@@ -33,6 +100,9 @@ document.querySelectorAll('.philosopher-trigger').forEach(trigger => {
     if (!isActive) {
       article.classList.add('active');
       article.querySelector('.dialogue').hidden = false;
+
+      const qaHistory = article.querySelector('.qa-history');
+      injectDesktopIntro(article.id, qaHistory);
 
       // === LOGIQUE DIFFÉRENTE SELON DESKTOP/MOBILE ===
       if (!isMobile()) {
@@ -188,6 +258,16 @@ document.addEventListener('DOMContentLoaded', function() {
   const mobileBackButton = document.getElementById('mobile-back-button');
   
   let currentPhilosopher = null;
+
+  function injectMobileIntro(philosopher) {
+    if (!mobileQaHistory) return;
+    const intro = getIntroMessage(philosopher);
+    const introBlock = document.createElement('div');
+    introBlock.className = 'mobile-qa-pair intro';
+    introBlock.innerHTML = `<div class="mobile-answer"><strong>${intro.label} :</strong> ${intro.html}</div>`;
+    mobileQaHistory.appendChild(introBlock);
+    mobileQaHistory.classList.add('has-content');
+  }
   
   // Données philosophes
   const philosophersData = {
@@ -238,8 +318,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const greetingEl = document.querySelector('.mobile-greeting');
     if (greetingEl) greetingEl.textContent = data.greeting;
     
-    // Vider l'historique
-    if (mobileQaHistory) mobileQaHistory.innerHTML = '';
+    // Vider l'historique et injecter l'amorce
+    if (mobileQaHistory) {
+      mobileQaHistory.innerHTML = '';
+      mobileQaHistory.classList.remove('has-content');
+      injectMobileIntro(philosopher);
+    }
     
     // Basculer l'affichage
     if (mobilePhilosophers) mobilePhilosophers.style.display = 'none';
@@ -274,6 +358,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="mobile-answer loading">${label} se réveille… (démarrage en cours)</div>
       `;
       mobileQaHistory.appendChild(qaBlock);
+      mobileQaHistory.classList.add('has-content');
       
       // Scroll vers le bas
       mobileQaHistory.scrollTop = mobileQaHistory.scrollHeight;
