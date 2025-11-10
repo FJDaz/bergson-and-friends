@@ -6,11 +6,19 @@ let gradioAppPromise = null;
 async function getGradioApp() {
     if (!gradioAppPromise) {
         gradioAppPromise = import("@gradio/client")
-            .then(({ client }) =>
-                client("FJDaz/bergsonAndFriends", {
-                    hf_token: process.env.HF_TOKEN || undefined
-                })
-            )
+            .then((mod) => {
+                if (typeof mod.client === 'function') {
+                    return mod.client("FJDaz/bergsonAndFriends", {
+                        hf_token: process.env.HF_TOKEN || undefined
+                    });
+                }
+                if (mod.Client && typeof mod.Client.connect === 'function') {
+                    return mod.Client.connect("FJDaz/bergsonAndFriends", {
+                        hf_token: process.env.HF_TOKEN || undefined
+                    });
+                }
+                throw new Error("Gradio client module does not expose 'client' or 'Client.connect'.");
+            })
             .catch((error) => {
                 gradioAppPromise = null;
                 throw error;
@@ -44,9 +52,9 @@ exports.handler = async (event) => {
 
     try {
         // Récupérer la question du frontend
-        const { question } = JSON.parse(event.body);
+        const { question, history = [], philosopher = 'spinoza' } = JSON.parse(event.body);
         
-        if (!question || question.trim() === '') {
+        if (!question || String(question).trim() === '') {
             return {
                 statusCode: 400,
                 headers,
@@ -55,33 +63,51 @@ exports.handler = async (event) => {
         }
 
         console.log('Question reçue:', question);
+        const conversationHistory = Array.isArray(history)
+            ? history.map((entry) => {
+                if (Array.isArray(entry) && entry.length === 2) {
+                    return [
+                        entry[0] != null ? String(entry[0]) : null,
+                        entry[1] != null ? String(entry[1]) : null
+                    ];
+                }
+                return [
+                    entry?.[0] != null ? String(entry[0]) : null,
+                    entry?.[1] != null ? String(entry[1]) : null
+                ];
+            })
+            : [];
 
         try {
             // Appel à votre HF Space
-        const app = await getGradioApp();
-        const result = await app.predict("/chat_function", {
-            message: question.trim(),
-            history: []
-        });
+            const app = await getGradioApp();
+            const result = await app.predict("/chat_function", {
+                message: String(question).trim(),
+                history: conversationHistory
+            });
 
-        const outputArray = Array.isArray(result)
-            ? result
-            : Array.isArray(result?.data)
-                ? result.data
-                : [];
+            const outputArray = Array.isArray(result)
+                ? result
+                : Array.isArray(result?.data)
+                    ? result.data
+                    : [];
 
-        let textReply = outputArray[0];
-        if (textReply && typeof textReply === 'object') {
-            textReply = textReply.text ?? textReply.message ?? JSON.stringify(textReply);
-        }
-        if (typeof textReply !== 'string') {
-            textReply = String(textReply ?? '');
-        }
+            let textReply = outputArray[0];
+            if (textReply && typeof textReply === 'object') {
+                textReply = textReply.text ?? textReply.message ?? JSON.stringify(textReply);
+            }
+            if (typeof textReply !== 'string') {
+                textReply = String(textReply ?? '');
+            }
 
-        let spinozaResponse = textReply.trim();
-        if (!spinozaResponse) {
-            spinozaResponse = "Je réfléchis à ta question...";
-        }
+            let spinozaResponse = textReply.trim();
+            if (!spinozaResponse) {
+                spinozaResponse = "Je réfléchis à ta question...";
+            }
+
+            const updatedHistory = Array.isArray(outputArray[1]) && outputArray[1].length
+                ? outputArray[1]
+                : [...conversationHistory, [String(question).trim(), spinozaResponse]];
 
             return {
                 statusCode: 200,
@@ -90,7 +116,8 @@ exports.handler = async (event) => {
                     philosopher: 'Spinoza',
                     answer: spinozaResponse,
                     timestamp: new Date().toISOString(),
-                    source: 'huggingface_space'
+                    source: 'huggingface_space',
+                    history: updatedHistory
                 })
             };
 
@@ -104,7 +131,8 @@ exports.handler = async (event) => {
                     answer: "Je suis encore en train de me réveiller depuis Hugging Face. Patiente quelques instants et relance ta question.",
                     timestamp: new Date().toISOString(),
                     source: 'warmup',
-                    note: 'Space HF en cours de démarrage — réessaie bientôt.'
+                    note: 'Space HF en cours de démarrage — réessaie bientôt.',
+                    history: conversationHistory
                 })
             };
         }
