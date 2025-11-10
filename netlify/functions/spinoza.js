@@ -1,7 +1,25 @@
 // netlify/functions/spinoza.js
 // Connexion à votre HF Space Spinoza Niveau B V1
 
-exports.handler = async (event, context) => {
+let gradioAppPromise = null;
+
+async function getGradioApp() {
+    if (!gradioAppPromise) {
+        gradioAppPromise = import("@gradio/client")
+            .then(({ client }) =>
+                client("FJDaz/bergsonAndFriends", {
+                    hf_token: process.env.HF_TOKEN || undefined
+                })
+            )
+            .catch((error) => {
+                gradioAppPromise = null;
+                throw error;
+            });
+    }
+    return gradioAppPromise;
+}
+
+exports.handler = async (event) => {
     // Headers CORS
     const headers = {
         'Access-Control-Allow-Origin': '*',
@@ -38,45 +56,16 @@ exports.handler = async (event, context) => {
 
         console.log('Question reçue:', question);
 
-        // URL de votre HF Space
-        const HF_SPACE_URL = 'https://fjdaz-bergsonandfriends.hf.space/api/predict';
-        
         try {
             // Appel à votre HF Space
-            const response = await fetch(HF_SPACE_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    data: [question, []] // message, history
-                }),
-                timeout: 30000 // 30 secondes timeout
-            });
+        const app = await getGradioApp();
+        const result = await app.predict("/chat_function", {
+            message: question.trim(),
+            history: []
+        });
 
-            if (!response.ok) {
-                throw new Error(`HF Space returned ${response.status}: ${response.statusText}`);
-            }
-
-            const result = await response.json();
-            console.log('Réponse HF Space:', result);
-
-            // Extraire la réponse de Spinoza
-            let spinozaResponse = "Je réfléchis à votre question...";
-            
-            if (result && result.data && result.data[1] && result.data[1].length > 0) {
-                const lastExchange = result.data[1][result.data[1].length - 1];
-                if (lastExchange && lastExchange[1]) {
-                    spinozaResponse = lastExchange[1];
-                    
-                    // Nettoyer la réponse (supprimer formatage markdown)
-                    spinozaResponse = spinozaResponse
-                        .replace(/\*\*Spinoza\*\* :/g, '')
-                        .replace(/🎭/g, '')
-                        .replace(/\*\[Contexte[^\]]*\]\*/g, '')
-                        .trim();
-                }
-            }
+        const textReply = Array.isArray(result) ? result[0] : String(result ?? "");
+        let spinozaResponse = (textReply || "Je réfléchis à votre question...").toString();
 
             return {
                 statusCode: 200,
@@ -91,10 +80,6 @@ exports.handler = async (event, context) => {
 
         } catch (hfError) {
             console.error('Erreur HF Space:', hfError);
-            
-            // Fallback : Réponse Spinoza contextuelle
-            const fallbackResponse = getFallbackSpinozaResponse(question);
-            
             return {
                 statusCode: 200,
                 headers,
