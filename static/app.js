@@ -10,52 +10,6 @@ function getPhilosopherLabel(id) {
   return philosopherLabels[id] || id.charAt(0).toUpperCase() + id.slice(1);
 }
 
-const conversations = {
-  bergson: [],
-  kant: [],
-  spinoza: []
-};
-
-function toPlainText(value) {
-  if (value == null) return null;
-  return String(value)
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function ensureConversation(philosopherId) {
-  if (!conversations[philosopherId]) {
-    conversations[philosopherId] = [];
-  }
-  return conversations[philosopherId];
-}
-
-function cloneConversationForPayload(philosopherId) {
-  return ensureConversation(philosopherId).map(([user, assistant]) => [user ?? null, assistant ?? null]);
-}
-
-function updateConversationFromServer(philosopherId, userQuestion, answer, serverHistory) {
-  const trimmedQuestion = (userQuestion ?? '').trim();
-  if (Array.isArray(serverHistory) && serverHistory.length) {
-    conversations[philosopherId] = serverHistory.map((entry) => {
-      if (Array.isArray(entry) && entry.length === 2) {
-        return [entry[0] ? toPlainText(entry[0]) : null, entry[1] ? toPlainText(entry[1]) : null];
-      }
-      return [entry?.[0] ? toPlainText(entry[0]) : null, entry?.[1] ? toPlainText(entry[1]) : null];
-    });
-    return;
-  }
-
-  const conv = ensureConversation(philosopherId);
-  const plainAnswer = toPlainText(answer);
-  if (conv.length === 0 || (conv[conv.length - 1][0] ?? '').trim() !== trimmedQuestion) {
-    conv.push([trimmedQuestion, plainAnswer]);
-  } else {
-    conv[conv.length - 1][1] = plainAnswer;
-  }
-}
-
 // Questions amorces par philosophe
 const INTRO_QUESTIONS = {
   spinoza: [
@@ -84,19 +38,11 @@ const INTRO_QUESTIONS = {
   ]
 };
 
-const INTRO_BUILDERS = {
-  spinoza: (question) => ({
-    plain: `Bonjour ! Je suis Spinoza. Discutons ensemble de cette question : ${question}. Qu'en penses-tu ?`,
-    html: `Bonjour ! Je suis Spinoza. Discutons ensemble de cette question : <strong>${question}</strong>.<br><br>Qu'en penses-tu ?`
-  }),
-  bergson: (question) => ({
-    plain: `Salut ! Je suis Bergson. Plongeons dans cette intuition : ${question}. Quel est ton ressenti ?`,
-    html: `Salut ! Je suis Bergson. Plongeons dans cette intuition : <strong>${question}</strong>.<br><br>Quel est ton ressenti ?`
-  }),
-  kant: (question) => ({
-    plain: `Bonjour, je suis Kant. Examinons ce problème critique : ${question}. Quelle est ta position ?`,
-    html: `Bonjour, je suis Kant. Examinons ce problème critique : <strong>${question}</strong>.<br><br>Quelle est ta position ?`
-  })
+const INTRO_TEMPLATES = {
+  spinoza: (question) => `Bonjour ! Je suis Spinoza. Discutons ensemble de cette question : <strong>${question}</strong>.<br><br>Qu'en penses-tu ?`,
+  bergson: (question) => `Salut ! Je suis Bergson. Plongeons dans cette intuition : <strong>${question}</strong>.<br><br>Quel est ton ressenti ?`,
+  kant: (question) => `Bonjour, je suis Kant. Examinons ce problème critique : <strong>${question}</strong>.<br><br>Quelle est ta position ?`,
+  default: (question, label) => `Bonjour ! Je suis ${label}. Explorons ensemble : <strong>${question}</strong>.`
 };
 
 function pickIntroQuestion(philosopherId) {
@@ -110,23 +56,11 @@ function pickIntroQuestion(philosopherId) {
 function getIntroMessage(philosopherId) {
   const label = getPhilosopherLabel(philosopherId);
   const question = pickIntroQuestion(philosopherId);
-  const builder = INTRO_BUILDERS[philosopherId];
-  let plain;
-  let html;
-  if (builder) {
-    const built = builder(question);
-    plain = built.plain;
-    html = built.html;
-  } else {
-    plain = `Bonjour ! Je suis ${label}. Explorons ensemble : ${question}.`;
-    html = `Bonjour ! Je suis ${label}. Explorons ensemble : <strong>${question}</strong>.`;
-  }
-
+  const template = INTRO_TEMPLATES[philosopherId] || ((q) => INTRO_TEMPLATES.default(q, label));
   return {
     question,
-    label,
-    plain,
-    html
+    html: template(question, label),
+    label
   };
 }
 
@@ -141,11 +75,6 @@ function injectDesktopIntro(philosopherId, qaHistory) {
   qaHistory.appendChild(introBlock);
   qaHistory.dataset.introInjected = 'true';
   qaHistory.style.display = 'block';
-
-  const conv = ensureConversation(philosopherId);
-  if (conv.length === 0) {
-    conv.push([null, intro.plain]);
-  }
 }
 
 // === DÉTECTION MOBILE ===
@@ -237,14 +166,9 @@ document.querySelectorAll('.qa-form').forEach(form => {
     async function sendQuestion() {
         const question = textarea.value.trim();
         if (!question) return;
-        const trimmedQuestion = question;
 
         const philosopherId = form.closest('.philosopher').id;
         const label = getPhilosopherLabel(philosopherId);
-
-        const conv = ensureConversation(philosopherId);
-        conv.push([trimmedQuestion, null]);
-        const historyPayload = cloneConversationForPayload(philosopherId);
         
         // Ajouter Q&R à l'historique
         const qaBlock = document.createElement('div');
@@ -274,11 +198,7 @@ document.querySelectorAll('.qa-form').forEach(form => {
             const response = await fetch(`/.netlify/functions/${philosopherId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    question: trimmedQuestion,
-                    philosopher: philosopherId,
-                    history: historyPayload
-                })
+                body: JSON.stringify({ question })
             });
 
             if (!response.ok) {
@@ -286,14 +206,11 @@ document.querySelectorAll('.qa-form').forEach(form => {
             }
             
             const data = await response.json();
-            const answerText = data.answer || 'Erreur: Pas de réponse';
             
             // Remplacer le "loading" par la vraie réponse
             const answerDiv = qaBlock.querySelector('.answer');
             answerDiv.className = 'answer';
-            answerDiv.innerHTML = `<strong>R:</strong> ${answerText}`;
-
-            updateConversationFromServer(philosopherId, trimmedQuestion, answerText, data.history);
+            answerDiv.innerHTML = `<strong>R:</strong> ${data.answer || 'Erreur: Pas de réponse'}`;
             
             // Auto-scroll vers la réponse complète
             setTimeout(() => scrollToLatestResponse(qaHistory), 100);
@@ -303,12 +220,6 @@ document.querySelectorAll('.qa-form').forEach(form => {
             const answerDiv = qaBlock.querySelector('.answer');
             answerDiv.className = 'answer error';
             answerDiv.innerHTML = `<strong>R:</strong> <em>${label} est encore en train de se réveiller. Réessaie dans quelques instants. (${error.message})</em>`;
-            updateConversationFromServer(
-              philosopherId,
-              trimmedQuestion,
-              `${label} est encore en train de se réveiller. Réessaie dans quelques instants. (${error.message})`,
-              null
-            );
         }
 
         if (slowWakeHint) {
@@ -350,19 +261,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function injectMobileIntro(philosopher) {
     if (!mobileQaHistory) return;
-    if (mobileQaHistory.dataset.introInjected === 'true') return;
     const intro = getIntroMessage(philosopher);
     const introBlock = document.createElement('div');
     introBlock.className = 'mobile-qa-pair intro';
     introBlock.innerHTML = `<div class="mobile-answer"><strong>${intro.label} :</strong> ${intro.html}</div>`;
     mobileQaHistory.appendChild(introBlock);
     mobileQaHistory.classList.add('has-content');
-    mobileQaHistory.dataset.introInjected = 'true';
-
-    const conv = ensureConversation(philosopher);
-    if (conv.length === 0) {
-      conv.push([null, intro.plain]);
-    }
   }
   
   // Données philosophes
@@ -418,7 +322,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (mobileQaHistory) {
       mobileQaHistory.innerHTML = '';
       mobileQaHistory.classList.remove('has-content');
-      delete mobileQaHistory.dataset.introInjected;
       injectMobileIntro(philosopher);
     }
     
@@ -446,10 +349,6 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!question || !currentPhilosopher) return;
       
       const label = getPhilosopherLabel(currentPhilosopher);
-      const trimmedQuestion = question;
-      const conv = ensureConversation(currentPhilosopher);
-      conv.push([trimmedQuestion, null]);
-      const historyPayload = cloneConversationForPayload(currentPhilosopher);
 
       // Ajouter la question à l'historique
       const qaBlock = document.createElement('div');
@@ -481,11 +380,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const response = await fetch(`/.netlify/functions/${currentPhilosopher}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            question: trimmedQuestion,
-            philosopher: currentPhilosopher,
-            history: historyPayload
-          })
+          body: JSON.stringify({ question })
         });
 
         if (!response.ok) {
@@ -493,14 +388,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const data = await response.json();
-        const answerText = data.answer || 'Erreur: Pas de réponse';
         
         // Remplacer par la vraie réponse
         const answerDiv = qaBlock.querySelector('.mobile-answer');
         answerDiv.className = 'mobile-answer';
-        answerDiv.innerHTML = answerText;
-
-        updateConversationFromServer(currentPhilosopher, trimmedQuestion, answerText, data.history);
+        answerDiv.textContent = data.answer || 'Erreur: Pas de réponse';
         
         // Scroll vers le bas
         mobileQaHistory.scrollTop = mobileQaHistory.scrollHeight;
@@ -509,9 +401,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Erreur API:', error);
         const answerDiv = qaBlock.querySelector('.mobile-answer');
         answerDiv.className = 'mobile-answer error';
-        const fallbackMessage = `${label} est encore en train de se réveiller. Réessaie dans quelques instants. (${error.message})`;
-        answerDiv.textContent = fallbackMessage;
-        updateConversationFromServer(currentPhilosopher, trimmedQuestion, fallbackMessage, null);
+        answerDiv.textContent = `${label} est encore en train de se réveiller. Réessaie dans quelques instants. (${error.message})`;
       }
 
       if (slowWakeHint) {
