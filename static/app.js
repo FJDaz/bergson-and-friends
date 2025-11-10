@@ -1,3 +1,15 @@
+// === UTILITAIRES GLOBAUX ===
+const philosopherLabels = {
+  bergson: 'Bergson',
+  kant: 'Kant',
+  spinoza: 'Spinoza'
+};
+
+function getPhilosopherLabel(id) {
+  if (!id || typeof id !== 'string') return 'Le philosophe';
+  return philosopherLabels[id] || id.charAt(0).toUpperCase() + id.slice(1);
+}
+
 // === DÉTECTION MOBILE ===
 function isMobile() {
     return window.innerWidth <= 768;
@@ -86,13 +98,14 @@ document.querySelectorAll('.qa-form').forEach(form => {
         if (!question) return;
 
         const philosopherId = form.closest('.philosopher').id;
+        const label = getPhilosopherLabel(philosopherId);
         
         // Ajouter Q&R à l'historique
         const qaBlock = document.createElement('div');
         qaBlock.className = 'qa-pair';
         qaBlock.innerHTML = `
             <div class="question"><strong>Q:</strong> ${question}</div>
-            <div class="answer loading"><strong>R:</strong> <em>Réflexion en cours...</em></div>
+            <div class="answer loading"><strong>R:</strong> <em>${label} se réveille… (démarrage en cours)</em></div>
         `;
         qaHistory.appendChild(qaBlock);
         
@@ -102,12 +115,25 @@ document.querySelectorAll('.qa-form').forEach(form => {
         // Vider le textarea
         textarea.value = '';
         
+        let slowWakeHint;
+
         try {
+            slowWakeHint = setTimeout(() => {
+                const answerDiv = qaBlock.querySelector('.answer');
+                if (answerDiv && answerDiv.classList.contains('loading')) {
+                    answerDiv.innerHTML = `<strong>R:</strong> <em>${label} s'étire... encore quelques secondes.</em>`;
+                }
+            }, 8000);
+
             const response = await fetch(`/.netlify/functions/${philosopherId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ question })
             });
+
+            if (!response.ok) {
+                throw new Error(`${response.status} ${response.statusText}`);
+            }
             
             const data = await response.json();
             
@@ -122,7 +148,12 @@ document.querySelectorAll('.qa-form').forEach(form => {
         } catch (error) {
             console.error('Erreur API:', error);
             const answerDiv = qaBlock.querySelector('.answer');
-            answerDiv.innerHTML = `<strong>R:</strong> <em>Erreur technique: ${error.message}</em>`;
+            answerDiv.className = 'answer error';
+            answerDiv.innerHTML = `<strong>R:</strong> <em>${label} est encore en train de se réveiller. Réessaie dans quelques instants. (${error.message})</em>`;
+        }
+
+        if (slowWakeHint) {
+            clearTimeout(slowWakeHint);
         }
         
         // Focus sur le textarea pour la prochaine question
@@ -233,12 +264,14 @@ document.addEventListener('DOMContentLoaded', function() {
       const question = textarea.value.trim();
       if (!question || !currentPhilosopher) return;
       
+      const label = getPhilosopherLabel(currentPhilosopher);
+
       // Ajouter la question à l'historique
       const qaBlock = document.createElement('div');
       qaBlock.className = 'mobile-qa-pair';
       qaBlock.innerHTML = `
         <div class="mobile-question">Q: ${question}</div>
-        <div class="mobile-answer loading">Réflexion en cours...</div>
+        <div class="mobile-answer loading">${label} se réveille… (démarrage en cours)</div>
       `;
       mobileQaHistory.appendChild(qaBlock);
       
@@ -248,13 +281,26 @@ document.addEventListener('DOMContentLoaded', function() {
       // Vider le textarea
       textarea.value = '';
       
+      let slowWakeHint;
+
       try {
+        slowWakeHint = setTimeout(() => {
+          const answerDiv = qaBlock.querySelector('.mobile-answer');
+          if (answerDiv && answerDiv.classList.contains('loading')) {
+            answerDiv.textContent = `${label} s'étire... encore quelques secondes.`;
+          }
+        }, 8000);
+
         // Appel API
         const response = await fetch(`/.netlify/functions/${currentPhilosopher}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ question })
         });
+
+        if (!response.ok) {
+          throw new Error(`${response.status} ${response.statusText}`);
+        }
         
         const data = await response.json();
         
@@ -269,7 +315,12 @@ document.addEventListener('DOMContentLoaded', function() {
       } catch (error) {
         console.error('Erreur API:', error);
         const answerDiv = qaBlock.querySelector('.mobile-answer');
-        answerDiv.textContent = `Erreur technique: ${error.message}`;
+        answerDiv.className = 'mobile-answer error';
+        answerDiv.textContent = `${label} est encore en train de se réveiller. Réessaie dans quelques instants. (${error.message})`;
+      }
+
+      if (slowWakeHint) {
+        clearTimeout(slowWakeHint);
       }
       
       // Focus sur le textarea
