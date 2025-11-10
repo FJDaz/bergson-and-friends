@@ -81,22 +81,15 @@ Reste concis mais précis."""
 def construire_prompt_contextuel_v2(contexte: str) -> str:
     """Code exact V2 succès"""
     base = random.choice(SYSTEM_PROMPTS_BASE)
-    
-    base += """\n\nRÈGLES STRICTES:
-- Tutoie toujours l'élève (tu/ton/ta)
-- Reste concis (2-3 phrases MAX)
-- Questionne au lieu d'affirmer
-- Varie tes formulations
-"""
 
     if contexte == "confusion":
-        base += "\nL'élève est confus → Donne UNE analogie concrète simple."
+        base += "\n\nL'élève est confus. Utilise une ANALOGIE concrète pour clarifier."
     elif contexte == "resistance":
-        base += "\nL'élève résiste → Révèle une contradiction dans sa position."
+        base += "\n\nL'élève résiste. Révèle la CONTRADICTION de sa position."
     elif contexte == "accord":
-        base += "\nL'élève est d'accord → Valide puis AVANCE logiquement."
+        base += "\n\nL'élève accepte. AVANCE vers la prochaine étape logique."
     else:
-        base += "\nÉlève neutre → Pose une question pour faire réfléchir."
+        base += "\n\nPose une question pour faire réfléchir l'élève."
 
     return base
 
@@ -106,12 +99,12 @@ def construire_prompt_contextuel_v2(contexte: str) -> str:
 
 def nettoyer_reponse(text: str) -> str:
     """Code exact succès V2"""
-    # Annotations méta
+    # Annotations méta (problème identifié dans tests)
     text = re.sub(r'\([^)]*[Aa]ttends[^)]*\)', '', text)
     text = re.sub(r'\([^)]*[Pp]oursuis[^)]*\)', '', text)
     text = re.sub(r'\([^)]*[Dd]onne[^)]*\)', '', text)
     
-    # Emojis (le modèle en génère parfois)
+    # Emojis inappropriés
     text = re.sub(r'[😀-🙏🌀-🗿🚀-🛿]', '', text)
     
     # Nettoyer espaces
@@ -121,7 +114,7 @@ def nettoyer_reponse(text: str) -> str:
     return text
 
 def limiter_phrases(text: str, max_phrases: int = 3) -> str:
-    """Limite nombre de phrases"""
+    """Limite verbosité (problème identifié)"""
     phrases = re.split(r'[.!?]+\s+', text)
     phrases = [p.strip() for p in phrases if p.strip()]
     
@@ -149,11 +142,11 @@ class DialogueSpinozaV2:
         # Construction prompt adaptatif
         system_prompt = construire_prompt_contextuel_v2(contexte)
         
-        # Historique conversation
+        # Historique conversation (limité pour éviter surcharge)
         messages = [{"role": "system", "content": system_prompt}]
         
-        # Ajouter historique
-        for entry in self.conversation_history[-4:]:  # 4 derniers échanges
+        # Ajouter derniers échanges
+        for entry in self.conversation_history[-4:]:  # 4 derniers échanges max
             messages.append({"role": "user", "content": entry["user"]})
             messages.append({"role": "assistant", "content": entry["assistant"]})
             
@@ -169,12 +162,12 @@ class DialogueSpinozaV2:
         
         inputs = self.tokenizer(text, return_tensors="pt").to(self.model.device)
         
-        # Génération avec paramètres V2
+        # Génération avec paramètres V2 optimisés
         with torch.no_grad():
             outputs = self.model.generate(
                 **inputs,
-                max_new_tokens=150,  # Concis
-                temperature=0.7,
+                max_new_tokens=150,  # Concis pour éviter verbosité
+                temperature=0.7,     # Variété sans chaos
                 top_p=0.9,
                 do_sample=True,
                 pad_token_id=self.tokenizer.pad_token_id,
@@ -203,56 +196,7 @@ class DialogueSpinozaV2:
         }
 
 # ============================================
-# CHARGEMENT MODÈLE (8-BIT CRITIQUE)
-# ============================================
-
-@torch.no_grad()
-def load_model():
-    """Chargement avec quantization 8-bit (FIX CRITIQUE)"""
-    
-    # Configuration 8-bit (FIX EOS)
-    quantization_config = BitsAndBytesConfig(
-        load_in_8bit=True,  # CRITIQUE: 8-bit pas 4-bit
-        llm_int8_threshold=6.0,
-        llm_int8_has_fp16_weight=False,
-    )
-    
-    print("🔄 Chargement Qwen 14B (8-bit)...")
-    
-    base_model = AutoModelForCausalLM.from_pretrained(
-        BASE_MODEL,
-        quantization_config=quantization_config,
-        device_map="auto",
-        torch_dtype=torch.float16,
-        token=HF_TOKEN,
-        trust_remote_code=True
-    )
-    
-    print("🔄 Chargement tokenizer...")
-    
-    tokenizer = AutoTokenizer.from_pretrained(
-        ADAPTER_MODEL,
-        token=HF_TOKEN,
-        trust_remote_code=True
-    )
-    
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-    
-    print("🔄 Application LoRA Spinoza Niveau B...")
-    
-    model = PeftModel.from_pretrained(
-        base_model,
-        ADAPTER_MODEL,
-        token=HF_TOKEN
-    )
-    
-    print("✅ Modèle chargé avec succès!")
-    
-    return model, tokenizer
-
-# ============================================
-# QUESTIONS ANNALES BAC (AMORCES)
+# QUESTIONS BAC (AMORCES SPINOZA)
 # ============================================
 
 QUESTIONS_BAC_SPINOZA = [
@@ -278,23 +222,72 @@ def choisir_question_amorce() -> str:
     return random.choice(QUESTIONS_BAC_SPINOZA)
 
 # ============================================
-# INTERFACE GRADIO
+# CHARGEMENT MODÈLE (8-BIT CRITIQUE)
+# ============================================
+
+@torch.no_grad()
+def load_model():
+    """Chargement avec quantization 8-bit (FIX EOS CRITIQUE)"""
+    
+    # Configuration 8-bit (CORRECTION CRITIQUE IDENTIFIÉE)
+    quantization_config = BitsAndBytesConfig(
+        load_in_8bit=True,  # CRITIQUE: 8-bit au lieu de 4-bit
+        llm_int8_threshold=6.0,
+        llm_int8_has_fp16_weight=False,
+    )
+    
+    print("🔄 Chargement Qwen 14B base (8-bit)...")
+    
+    base_model = AutoModelForCausalLM.from_pretrained(
+        BASE_MODEL,
+        quantization_config=quantization_config,
+        device_map="auto",
+        torch_dtype=torch.float16,
+        token=HF_TOKEN,
+        trust_remote_code=True
+    )
+    
+    print("🔄 Chargement tokenizer...")
+    
+    tokenizer = AutoTokenizer.from_pretrained(
+        ADAPTER_MODEL,
+        token=HF_TOKEN,
+        trust_remote_code=True
+    )
+    
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    
+    print("🔄 Application adaptateurs LoRA Spinoza Niveau B...")
+    
+    model = PeftModel.from_pretrained(
+        base_model,
+        ADAPTER_MODEL,
+        token=HF_TOKEN
+    )
+    
+    print("✅ Spinoza Niveau B V1 chargé avec succès!")
+    
+    return model, tokenizer
+
+# ============================================
+# INTERFACE GRADIO SIMPLE
 # ============================================
 
 def create_interface():
-    """Interface Gradio optimisée"""
+    """Interface Gradio pour HF Space"""
     
-    print("🔄 Initialisation modèle...")
+    print("🔄 Initialisation Spinoza Niveau B V1...")
     model, tokenizer = load_model()
     dialogue = DialogueSpinozaV2(model, tokenizer)
     
     def initialiser_conversation():
-        """Spinoza démarre avec une question"""
+        """Spinoza démarre avec question bac"""
         question = choisir_question_amorce()
-        return [[None, f"Bonjour ! Je suis Spinoza. Discutons ensemble de cette question :\n\n**{question}**\n\nQu'en penses-tu ?"]]
+        return [[None, f"🎭 **Spinoza** : Bonjour ! Explorons ensemble cette question :\n\n**{question}**\n\nQu'en penses-tu ?"]]
     
     def chat_function(message, history):
-        """Fonction chat Gradio"""
+        """Fonction chat principale"""
         if not message.strip():
             return "", history
             
@@ -303,46 +296,50 @@ def create_interface():
             response = result["message"]
             contexte = result["contexte"]
             
-            # Format historique Gradio
+            # Format avec contexte pour debug
+            response_formatted = f"🎭 **Spinoza** : {response}\n\n*[Contexte détecté: {contexte}]*"
+            
             history = history or []
-            history.append([message, f"{response}\n\n*[Contexte: {contexte}]*"])
+            history.append([message, response_formatted])
             
             return "", history
             
         except Exception as e:
-            error_msg = f"Erreur: {str(e)}"
+            error_msg = f"❌ Erreur: {str(e)}"
             history = history or []
             history.append([message, error_msg])
             return "", history
     
     # Interface Gradio
-    with gr.Blocks(title="Spinoza Niveau B - V2") as interface:
-        gr.Markdown("# 🎭 Spinoza - Dialogue Philosophique V2")
-        gr.Markdown("*Modèle fine-tuné niveau B avec détection contextuelle - Spinoza pose une question du bac pour démarrer*")
+    with gr.Blocks(title="Spinoza Niveau B V1") as interface:
+        gr.Markdown("# 🎭 Spinoza - Dialogue Philosophique Niveau B")
+        gr.Markdown("*Modèle fine-tuné avec détection contextuelle - Code Colab V1 fonctionnel*")
         
         chatbot = gr.Chatbot(
-            value=initialiser_conversation(),  # Spinoza démarre
+            value=initialiser_conversation(),
             elem_id="chatbot",
             bubble_full_width=False,
-            height=500
+            height=600,
+            show_label=False
         )
         
-        msg = gr.Textbox(
-            placeholder="Réponds à Spinoza ou pose une nouvelle question...",
-            container=False,
-            scale=7
-        )
-        
-        nouveau_btn = gr.Button("🎲 Nouvelle question", scale=1)
-        clear = gr.Button("🗑️ Effacer", scale=1)
+        with gr.Row():
+            msg = gr.Textbox(
+                placeholder="Réponds à Spinoza ou pose une question...",
+                container=False,
+                scale=8
+            )
+            nouveau_btn = gr.Button("🎲 Nouvelle question", scale=2)
+            clear_btn = gr.Button("🗑️ Effacer", scale=1)
         
         msg.submit(chat_function, [msg, chatbot], [msg, chatbot])
         nouveau_btn.click(lambda: initialiser_conversation(), None, chatbot)
-        clear.click(lambda: ([], None), None, [chatbot, msg])
+        clear_btn.click(lambda: ([], ""), None, [chatbot, msg])
         
         gr.Markdown("---")
-        gr.Markdown("**Contextes détectés:** accord, confusion, résistance, neutre")
-        gr.Markdown("**Questions bac:** 15 sujets philosophiques authentiques")
+        gr.Markdown("**🎯 Contextes détectés :** accord, confusion, résistance, neutre")
+        gr.Markdown("**📚 Questions bac :** 15 sujets philosophiques authentiques Spinoza")
+        gr.Markdown("**⚙️ Modèle :** Qwen 14B + LoRA Spinoza Niveau B (quantization 8-bit)")
     
     return interface
 
@@ -355,5 +352,5 @@ if __name__ == "__main__":
     interface.launch(
         server_name="0.0.0.0",
         server_port=7860,
-        share=True
+        share=False
     )
