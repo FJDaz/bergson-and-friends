@@ -464,7 +464,6 @@ with gr.Blocks(css=custom_css, title="🧠 Bergson & Friends") as demo:
 demo.queue(
     api_open=True,          # ← Active l'API REST
     max_size=50,            # Limite queue  
-    concurrency_count=5     # Requêtes simultanées
 )
 
 if __name__ == "__main__":
