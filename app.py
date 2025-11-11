@@ -1,8 +1,3 @@
-# =============================================================================
-# SCRIPT CURSOR - CORRECTION HUGGINGFACE SPACE API
-# Fichier: hf-space/app.py (à déployer sur ton Space HuggingFace)
-# =============================================================================
-
 import gradio as gr
 
 def spinoza_chat(message, history):
@@ -20,10 +15,7 @@ L'API REST fonctionne correctement. Prochaine étape : intégrer le vrai modèle
     
     return response
 
-# =============================================================================
-# CONFIGURATION GRADIO AVEC API ACTIVÉE
-# =============================================================================
-
+# Configuration Gradio simple et compatible
 demo = gr.ChatInterface(
     fn=spinoza_chat,
     title="🧠 Bergson & Friends - Spinoza",
@@ -32,23 +24,15 @@ demo = gr.ChatInterface(
         "Qu'est-ce que la substance ?",
         "Comment définissez-vous les affects ?",
         "L'API fonctionne-t-elle ?"
-    ],
-    retry_btn="🔄 Retry",
-    undo_btn="↩️ Undo", 
-    clear_btn="🗑️ Clear"
+    ]
 )
 
 # CRUCIAL: Configuration qui active l'API REST
-demo.queue(
-    api_open=True,          # ← CLÉE : Active l'API REST
-    max_size=20,            # Limite queue
-    concurrency_count=3     # Requêtes simultanées
-)
+demo.queue(api_open=True)
 
 if __name__ == "__main__":
     demo.launch(
         server_name="0.0.0.0",
         server_port=7860,
-        show_api=True,         # ← Documentation API sur /docs
-        share=False
+        show_api=True
     )
