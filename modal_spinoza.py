@@ -7,8 +7,6 @@ import os
 import re
 import random
 from typing import Dict, List, Optional
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
 
 # ============================================
 # MODAL CONFIGURATION
@@ -23,12 +21,17 @@ volume = modal.Volume.from_name("spinoza-models", create_if_missing=True)
 image = (
     modal.Image.debian_slim(python_version="3.11")
     .pip_install(
+        # ML dependencies
         "torch==2.1.0",
         "transformers==4.36.0",
         "accelerate==0.25.0",
         "bitsandbytes==0.41.3",
         "peft==0.7.0",
         "huggingface-hub==0.19.4",
+        # API dependencies
+        "fastapi==0.110.0",
+        "pydantic==2.6.0",
+        "uvicorn==0.27.0",
     )
 )
 
@@ -155,6 +158,8 @@ def limiter_phrases(text: str, max_phrases: int = 3) -> str:
 # ============================================
 # PYDANTIC MODELS POUR L'API
 # ============================================
+
+from pydantic import BaseModel
 
 class ChatRequest(BaseModel):
     question: str
@@ -359,6 +364,7 @@ class SpinozaService:
 def fastapi_app():
     """Crée et expose l'application FastAPI"""
     from datetime import datetime
+    from fastapi import FastAPI, HTTPException
 
     web_app = FastAPI(title="Spinoza Chatbot API")
 
