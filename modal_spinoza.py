@@ -220,7 +220,7 @@ class SpinozaService:
         print("🔄 Chargement tokenizer...")
 
         tokenizer = AutoTokenizer.from_pretrained(
-            ADAPTER_MODEL,
+            BASE_MODEL,  # Charger depuis Qwen 14B, pas depuis le LoRA
             token=hf_token,
             trust_remote_code=True,
             cache_dir=MODEL_CACHE_PATH,
