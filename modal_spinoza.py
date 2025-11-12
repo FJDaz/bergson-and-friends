@@ -24,12 +24,12 @@ image = (
         # Base dependencies (NumPy 1.x required for torch 2.1.0 compatibility)
         "numpy<2",
         "scipy",  # Required by bitsandbytes
-        # ML dependencies
+        # ML dependencies (versions validées)
         "torch==2.1.0",
-        "transformers==4.36.0",
-        "accelerate==0.25.0",
+        "transformers==4.44.2",  # Qwen2.5 support
+        "accelerate==0.31.0",
         "bitsandbytes==0.41.3",
-        "peft==0.7.0",
+        "peft==0.10.0",
         "huggingface-hub==0.19.4",
         # API dependencies
         "fastapi==0.110.0",
