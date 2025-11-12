@@ -21,6 +21,8 @@ volume = modal.Volume.from_name("spinoza-models", create_if_missing=True)
 image = (
     modal.Image.debian_slim(python_version="3.11")
     .pip_install(
+        # Base dependencies (NumPy 1.x required for torch 2.1.0 compatibility)
+        "numpy<2",
         # ML dependencies
         "torch==2.1.0",
         "transformers==4.36.0",
