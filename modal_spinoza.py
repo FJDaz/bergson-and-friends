@@ -247,6 +247,51 @@ class SpinozaService:
 
         print("🔄 Application LoRA Spinoza Niveau B...")
 
+        # PATCH : Retirer les champs UnsLoTH incompatibles avec PEFT
+        print("🔧 Patch adapter_config.json pour compatibilité PEFT...")
+        import json
+        from pathlib import Path
+
+        # Trouver le fichier adapter_config.json dans le cache
+        adapter_cache = Path(MODEL_CACHE_PATH) / "models--fjdaz--qwen-spinoza-niveau-b"
+
+        # Chercher dans snapshots
+        config_files = list(adapter_cache.glob("snapshots/*/adapter_config.json"))
+
+        if config_files:
+            config_path = config_files[0]
+            print(f"📝 Patching: {config_path}")
+
+            # Charger config
+            with open(config_path, 'r') as f:
+                config = json.load(f)
+
+            # Retirer les champs UnsLoTH incompatibles
+            fields_to_remove = [
+                'corda_config',
+                'eva_config',
+                'lora_bias',  # Nouveau champ qui pose problème
+                'use_rslora',  # Potentiellement incompatible aussi
+                'use_dora',    # Potentiellement incompatible
+            ]
+
+            patched = False
+            for field in fields_to_remove:
+                if field in config:
+                    print(f"  ❌ Retrait de '{field}': {config[field]}")
+                    del config[field]
+                    patched = True
+
+            if patched:
+                # Sauvegarder config patchée
+                with open(config_path, 'w') as f:
+                    json.dump(config, f, indent=2)
+                print("  ✅ Config patchée avec succès")
+            else:
+                print("  ℹ️  Aucun champ incompatible trouvé")
+        else:
+            print("  ⚠️  adapter_config.json non trouvé dans le cache")
+
         model = PeftModel.from_pretrained(
             base_model,
             ADAPTER_MODEL,
