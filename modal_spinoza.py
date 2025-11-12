@@ -30,7 +30,7 @@ image = (
         "accelerate==0.31.0",
         "bitsandbytes==0.41.3",
         "peft==0.10.0",
-        "huggingface-hub==0.19.4",
+        "huggingface-hub",  # Auto-resolve compatible version
         # API dependencies
         "fastapi==0.110.0",
         "pydantic==2.6.0",
