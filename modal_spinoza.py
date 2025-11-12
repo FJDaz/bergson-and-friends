@@ -23,6 +23,7 @@ image = (
     .pip_install(
         # Base dependencies (NumPy 1.x required for torch 2.1.0 compatibility)
         "numpy<2",
+        "scipy",  # Required by bitsandbytes
         # ML dependencies
         "torch==2.1.0",
         "transformers==4.36.0",
