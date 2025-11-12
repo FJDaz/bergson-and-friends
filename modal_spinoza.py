@@ -175,34 +175,10 @@ class ChatResponse(BaseModel):
     volumes={MODEL_CACHE_PATH: volume},
     secrets=[modal.Secret.from_name("hf-token")],
     timeout=600,  # 10 minutes
-    container_idle_timeout=300,  # Keep warm 5 minutes
+    scaledown_window=300,  # Keep warm 5 minutes
 )
 class SpinozaService:
     """Service Modal pour le chatbot Spinoza"""
-
-    @modal.build()
-    def download_models(self):
-        """Télécharge les modèles au build time"""
-        from huggingface_hub import snapshot_download
-        import os
-
-        hf_token = os.environ.get("HF_TOKEN")
-
-        print(f"📥 Téléchargement de {BASE_MODEL}...")
-        snapshot_download(
-            BASE_MODEL,
-            cache_dir=MODEL_CACHE_PATH,
-            token=hf_token,
-        )
-
-        print(f"📥 Téléchargement de {ADAPTER_MODEL}...")
-        snapshot_download(
-            ADAPTER_MODEL,
-            cache_dir=MODEL_CACHE_PATH,
-            token=hf_token,
-        )
-
-        print("✅ Modèles téléchargés avec succès!")
 
     @modal.enter()
     def load_model(self):
