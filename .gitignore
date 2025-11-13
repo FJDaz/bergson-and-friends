@@ -1,0 +1,47 @@
+# Environment Variables (SECRETS!)
+.env
+.env.local
+.env.production
+
+# Netlify
+.netlify/
+netlify-debug.log
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# OS Files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Python (pour le Space HF)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+.cache/
