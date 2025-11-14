@@ -171,17 +171,27 @@
           "L'homme est-il naturellement social ?"
       ];
 
+      // Stockage historique par philosophe (SYSTÈME ADAPTATIF)
+      const conversationHistories = {
+          bergson: [],
+          kant: [],
+          spinoza: []
+      };
+
       // Initialiser Spinoza avec une question amorce
       const spinozaHistory = document.querySelector('#spinoza .qa-history');
       if (spinozaHistory) {
           const questionAmorce = questionsBacSpinoza[Math.floor(Math.random() * questionsBacSpinoza.length)];
+          const greeting = `Bonjour ! Je suis Spinoza. Discutons ensemble de cette question :\n\n${questionAmorce}\n\nQu'en penses-tu ?`;
+
           spinozaHistory.innerHTML = `
               <div style="margin: 10px 0; padding: 10px; border-left: 3px solid #4a90e2;">
-                  <div><strong>Spinoza :</strong> Bonjour ! Je suis Spinoza. Discutons ensemble de cette question :</div>
-                  <div style="margin: 10px 0; font-weight: bold; font-size: 1.1em;">${questionAmorce}</div>
-                  <div>Qu'en penses-tu ?</div>
+                  <div><strong>Spinoza :</strong> ${greeting.replace(/\n/g, '<br>')}</div>
               </div>
           `;
+
+          // Ajouter le greeting à l'historique
+          conversationHistories.spinoza.push([null, greeting]);
       }
 
       // Gestion des questions/réponses
@@ -198,23 +208,41 @@
               const philosopherId = form.closest('.philosopher').id;
               console.log(`Question pour ${philosopherId}:`, question);
 
+              // Construire payload avec historique (SYSTÈME ADAPTATIF)
+              const payload = {
+                  question: question,
+                  history: conversationHistories[philosopherId] || []
+              };
+
               fetch(`/.netlify/functions/${philosopherId}`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ question })
+                  body: JSON.stringify(payload)
               })
               .then(r => r.json())
               .then(data => {
+                  const answer = data.answer;
+
+                  // Ajouter à l'historique conversationnel
+                  conversationHistories[philosopherId].push([question, answer]);
+
+                  // Afficher dans le DOM
                   const history = form.parentElement.querySelector('.qa-history');
                   history.innerHTML += `
                       <div style="margin: 10px 0; padding: 10px; border-left: 3px solid #ccc;">
                           <div><strong>Q:</strong> ${question}</div>
-                          <div><strong>R:</strong> ${data.answer}</div>
+                          <div><strong>R:</strong> ${answer}</div>
                       </div>
                   `;
                   textarea.value = '';
+
+                  // Scroll vers le bas
+                  history.scrollTop = history.scrollHeight;
               })
-              .catch(console.error);
+              .catch(err => {
+                  console.error('Erreur:', err);
+                  alert('Erreur de connexion. Réessaie dans quelques instants.');
+              });
           });
       });
   });

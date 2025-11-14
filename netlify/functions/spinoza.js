@@ -25,7 +25,7 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        const { question } = JSON.parse(event.body);
+        const { question, history } = JSON.parse(event.body);
 
         if (!question || question.trim() === '') {
             return {
@@ -36,10 +36,11 @@ exports.handler = async (event, context) => {
         }
 
         console.log(`[Spinoza NB] Question: ${question.substring(0, 50)}...`);
+        console.log(`[Spinoza NB] History length: ${history ? history.length : 0}`);
 
-        // Appel au Space avec timeout
+        // Appel au Space avec timeout (TRANSMET L'HISTORIQUE)
         const response = await Promise.race([
-            callSpinozaSpace(question),
+            callSpinozaSpace(question, history || []),
             timeoutPromise(TIMEOUT_MS)
         ]);
 
@@ -95,8 +96,9 @@ exports.handler = async (event, context) => {
 /**
  * Appelle le Space Spinoza via Gradio Client
  */
-async function callSpinozaSpace(message) {
+async function callSpinozaSpace(message, history) {
     console.log(`[API] Connecting to ${SPACE_URL}...`);
+    console.log(`[API] History entries: ${history.length}`);
 
     try {
         // Import dynamique pour ESM
@@ -104,9 +106,10 @@ async function callSpinozaSpace(message) {
         const client = await Client.connect(SPACE_URL);
         console.log('[API] Connected to Space');
 
+        // SYSTÈME ADAPTATIF : Transmettre l'historique au Space
         const result = await client.predict("/chat_function", {
             message: message,
-            history: []
+            history: history
         });
 
         console.log('[API] Result received');
