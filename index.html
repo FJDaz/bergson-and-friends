@@ -152,19 +152,52 @@
 <script>
   // Fix définitif pour tous les philosophes
   document.addEventListener('DOMContentLoaded', function() {
+      // Questions bac pour Spinoza (même liste que dans app.py)
+      const questionsBacSpinoza = [
+          "La liberté est-elle une illusion ?",
+          "Suis-je esclave de mes désirs ?",
+          "Puis-je maîtriser mes émotions ?",
+          "La joie procure-t-elle un pouvoir ?",
+          "Peut-on désirer sans souffrir ?",
+          "Sommes-nous responsables de nos actes ?",
+          "La raison suffit-elle à nous guider ?",
+          "Peut-on vivre sans passions ?",
+          "Qu'est-ce que la vérité ?",
+          "Que puis-je savoir du monde ?",
+          "Dieu et Nature sont-ils identiques ?",
+          "Pourquoi souffrons-nous ?",
+          "La connaissance rend-elle libre ?",
+          "Peut-on être heureux sans être libre ?",
+          "L'homme est-il naturellement social ?"
+      ];
+
+      // Initialiser Spinoza avec une question amorce
+      const spinozaHistory = document.querySelector('#spinoza .qa-history');
+      if (spinozaHistory) {
+          const questionAmorce = questionsBacSpinoza[Math.floor(Math.random() * questionsBacSpinoza.length)];
+          spinozaHistory.innerHTML = `
+              <div style="margin: 10px 0; padding: 10px; border-left: 3px solid #4a90e2;">
+                  <div><strong>Spinoza :</strong> Bonjour ! Je suis Spinoza. Discutons ensemble de cette question :</div>
+                  <div style="margin: 10px 0; font-weight: bold; font-size: 1.1em;">${questionAmorce}</div>
+                  <div>Qu'en penses-tu ?</div>
+              </div>
+          `;
+      }
+
+      // Gestion des questions/réponses
       document.querySelectorAll('input[type="image"]').forEach(btn => {
           btn.addEventListener('click', function(e) {
               e.preventDefault();
-              
+
               const form = this.closest('form');
               const textarea = form.querySelector('textarea');
               const question = textarea.value.trim();
-              
+
               if (!question) return;
-              
+
               const philosopherId = form.closest('.philosopher').id;
               console.log(`Question pour ${philosopherId}:`, question);
-              
+
               fetch(`/.netlify/functions/${philosopherId}`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
