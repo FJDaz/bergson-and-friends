@@ -1,8 +1,6 @@
 // netlify/functions/spinoza.js - Version HF Space Pro (spinoza_NB)
 // Utilise @gradio/client pour appeler le Space
 
-const { Client } = require("@gradio/client");
-
 const SPACE_URL = "https://fjdaz-spinoza-nb.hf.space";
 const TIMEOUT_MS = 60000; // 60s
 
@@ -101,6 +99,8 @@ async function callSpinozaSpace(message) {
     console.log(`[API] Connecting to ${SPACE_URL}...`);
 
     try {
+        // Import dynamique pour ESM
+        const { Client } = await import("@gradio/client");
         const client = await Client.connect(SPACE_URL);
         console.log('[API] Connected to Space');
 
