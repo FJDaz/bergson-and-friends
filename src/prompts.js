@@ -83,7 +83,8 @@ function buildPrompt(philosopher, question, ragContext) {
  * On injecte le style du philosophe DANS le message pour orienter SNB
  */
 async function callSNB(philosopher, ragContext, userMessage) {
-    const SPACE_URL = "https://fjdaz-spinoza-nb.hf.space";
+    const SPACE_URL = "fjdaz-spinoza-nb.hf.space";
+    const API_PREFIX = "/gradio_api";
 
     // Styles courts pour injecter dans le message (TU ES le philosophe)
     const STYLE_INJECTION = {
@@ -101,31 +102,117 @@ ${ragContext}
 Question de l'élève : ${userMessage}`;
 
     try {
-        // Import dynamique @gradio/client (ESM)
-        const { Client } = await import("@gradio/client");
-        const client = await Client.connect(SPACE_URL);
+        // Import https pour Node.js
+        const https = require('https');
 
-        // Appel au Space
-        const result = await client.predict("/chat_function", {
-            message: enrichedMessage,
-            history: [] // Mode one-shot
+        // Étape 1: Initier la prédiction
+        const payload = JSON.stringify({
+            data: [enrichedMessage, []],  // [message, history]
+            session_hash: Math.random().toString(36).substring(2, 15)
         });
 
-        // Extraire la réponse
-        if (result && result.data && Array.isArray(result.data)) {
-            const history = result.data[1];
-            if (history && history.length > 0) {
-                const lastMessage = history[history.length - 1];
-                if (lastMessage && lastMessage[1]) {
-                    // Retirer l'annotation de contexte
-                    let response = lastMessage[1];
-                    response = response.replace(/\n\n\*\[Contexte:.*?\]\*$/g, '');
-                    return response;
-                }
-            }
-        }
+        const eventId = await new Promise((resolve, reject) => {
+            const options = {
+                hostname: SPACE_URL,
+                port: 443,
+                path: `${API_PREFIX}/call/chat_function`,
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Length': Buffer.byteLength(payload)
+                },
+                timeout: 10000
+            };
 
-        throw new Error('Format de réponse inattendu du Space SNB');
+            const req = https.request(options, (res) => {
+                let data = '';
+                res.on('data', (chunk) => { data += chunk; });
+                res.on('end', () => {
+                    try {
+                        const result = JSON.parse(data);
+                        if (result.event_id) {
+                            resolve(result.event_id);
+                        } else {
+                            reject(new Error('No event_id returned'));
+                        }
+                    } catch (e) {
+                        reject(new Error(`Parse error: ${e.message}`));
+                    }
+                });
+            });
+
+            req.on('error', reject);
+            req.on('timeout', () => {
+                req.destroy();
+                reject(new Error('Request timeout'));
+            });
+
+            req.write(payload);
+            req.end();
+        });
+
+        // Étape 2: Écouter les résultats SSE
+        return await new Promise((resolve, reject) => {
+            const options = {
+                hostname: SPACE_URL,
+                port: 443,
+                path: `${API_PREFIX}/call/chat_function/${eventId}`,
+                method: 'GET',
+                timeout: 90000  // 90s pour la génération
+            };
+
+            const req = https.request(options, (res) => {
+                let buffer = '';
+
+                res.on('data', (chunk) => {
+                    buffer += chunk.toString();
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.substring(6));
+
+                                if (data.msg === 'process_completed') {
+                                    const output = data.output?.data;
+                                    if (output && output.length > 1 && Array.isArray(output[1])) {
+                                        const lastMessage = output[1][output[1].length - 1];
+                                        if (lastMessage && lastMessage[1]) {
+                                            let response = lastMessage[1];
+                                            response = response.replace(/\n\n\*\[Contexte:.*?\]\*$/g, '');
+                                            resolve(response);
+                                            req.destroy();
+                                            return;
+                                        }
+                                    }
+                                }
+
+                                if (data.msg === 'process_error') {
+                                    reject(new Error(`Space error: ${data.error}`));
+                                    req.destroy();
+                                    return;
+                                }
+                            } catch (e) {
+                                // Ligne SSE non-JSON, ignorer
+                            }
+                        }
+                    }
+                });
+
+                res.on('end', () => {
+                    reject(new Error('SSE stream ended without completion'));
+                });
+            });
+
+            req.on('error', reject);
+            req.on('timeout', () => {
+                req.destroy();
+                reject(new Error('SSE timeout'));
+            });
+
+            req.end();
+        });
 
     } catch (error) {
         console.error('[SNB Error]:', error.message);
