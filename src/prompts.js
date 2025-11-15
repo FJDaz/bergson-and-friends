@@ -121,7 +121,7 @@ Question de l'élève : ${userMessage}`;
                     'Content-Type': 'application/json',
                     'Content-Length': Buffer.byteLength(payload)
                 },
-                timeout: 10000
+                timeout: 30000  // 30s pour Space Pro
             };
 
             const req = https.request(options, (res) => {
@@ -158,7 +158,7 @@ Question de l'élève : ${userMessage}`;
                 port: 443,
                 path: `${API_PREFIX}/call/chat_function/${eventId}`,
                 method: 'GET',
-                timeout: 90000  // 90s pour la génération
+                timeout: 120000  // 120s (2min) pour Space Pro
             };
 
             const req = https.request(options, (res) => {
@@ -173,19 +173,30 @@ Question de l'élève : ${userMessage}`;
                         if (line.startsWith('data: ')) {
                             try {
                                 const data = JSON.parse(line.substring(6));
+                                console.log('[SNB SSE]', data.msg, JSON.stringify(data).substring(0, 200));
 
                                 if (data.msg === 'process_completed') {
                                     const output = data.output?.data;
+                                    console.log('[SNB] Output:', JSON.stringify(output));
+
                                     if (output && output.length > 1 && Array.isArray(output[1])) {
                                         const lastMessage = output[1][output[1].length - 1];
+                                        console.log('[SNB] Last message:', lastMessage);
+
                                         if (lastMessage && lastMessage[1]) {
                                             let response = lastMessage[1];
                                             response = response.replace(/\n\n\*\[Contexte:.*?\]\*$/g, '');
+                                            console.log('[SNB] Final response:', response.substring(0, 100));
                                             resolve(response);
                                             req.destroy();
                                             return;
                                         }
                                     }
+
+                                    console.error('[SNB] Unexpected output format:', output);
+                                    reject(new Error('Unexpected output format'));
+                                    req.destroy();
+                                    return;
                                 }
 
                                 if (data.msg === 'process_error') {
