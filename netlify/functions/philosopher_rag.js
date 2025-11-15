@@ -103,8 +103,8 @@ exports.handler = async (event, context) => {
             console.log(`[RAG] ${passages.length} passages trouvés`);
 
             // Appel SNB (ou mock si USE_MOCK=true)
-            // TEMPORAIRE: Mode MOCK activé en attendant fix API Space
-            const useMock = true;  // TODO: Réactiver SNB quand Space API configurée
+            // SNB réactivé : Space HF configuré avec show_api=True
+            const useMock = process.env.USE_MOCK === 'true';
             let answer;
 
             if (useMock) {
