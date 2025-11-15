@@ -102,14 +102,14 @@ exports.handler = async (event, context) => {
 
             console.log(`[RAG] ${passages.length} passages trouvés`);
 
-            // Appel SNB (ou mock selon env)
-            // Par défaut : MOCK en local pour éviter timeouts
-            const useMock = process.env.USE_SNB !== 'true';
+            // Appel SNB (ou mock si USE_MOCK=true)
+            // Par défaut : SNB en production, mock seulement si explicitement demandé
+            const useMock = process.env.USE_MOCK === 'true';
             let answer;
 
             if (useMock) {
                 answer = getMockResponse(philosopher, message);
-                console.log('[RAG] Mode MOCK (rapide)');
+                console.log('[RAG] Mode MOCK (USE_MOCK=true)');
             } else {
                 try {
                     console.log('[RAG] Appel SNB Space (peut prendre 30-60s si cold start)...');
