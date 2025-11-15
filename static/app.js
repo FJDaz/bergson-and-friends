@@ -290,5 +290,42 @@ document.addEventListener('DOMContentLoaded', function() {
       if (mobileVersion) mobileVersion.style.display = 'none';
     }
   });
-  
+
+  // === AUTO-INIT GREETINGS POUR LES 3 PHILOSOPHES ===
+  // Initialiser chaque philosophe au chargement de la page
+  async function initPhilosopher(philosopherId) {
+    try {
+      const response = await fetch(`/.netlify/functions/philosopher_rag`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'init',
+          philosopher: philosopherId
+        })
+      });
+
+      const data = await response.json();
+
+      // Afficher le greeting dans l'historique
+      const qaHistory = document.querySelector(`#${philosopherId} .qa-history`);
+      if (qaHistory && data.greeting) {
+        qaHistory.innerHTML = `
+          <div class="qa-pair initial-greeting">
+            <div class="answer">${data.greeting.replace(/\n/g, '<br>')}</div>
+          </div>
+        `;
+      }
+
+      console.log(`✅ ${philosopherId} initialized:`, data.question);
+
+    } catch (error) {
+      console.error(`❌ Failed to init ${philosopherId}:`, error);
+    }
+  }
+
+  // Initialiser les 3 philosophes au chargement
+  if (!isMobile()) {
+    ['bergson', 'kant', 'spinoza'].forEach(id => initPhilosopher(id));
+  }
+
 });
