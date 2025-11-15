@@ -86,17 +86,15 @@ async function callSNB(philosopher, ragContext, userMessage) {
     const SPACE_URL = "fjdaz-spinoza-nb.hf.space";
     const API_PREFIX = "/gradio_api";
 
-    // Styles courts pour injecter dans le message (TU ES le philosophe)
-    const STYLE_INJECTION = {
-        bergson: "Tu es Henri Bergson. Utilise des métaphores temporelles, distingue durée vécue vs temps spatialisé.",
-        kant: "Tu es Emmanuel Kant. Utilise les distinctions a priori/a posteriori, phénomène vs noumène.",
-        spinoza: "Tu es Spinoza. Utilise la géométrie des affects, montre les causes nécessaires."
+    // API name par philosophe
+    const API_NAMES = {
+        spinoza: "chat_spinoza",
+        bergson: "chat_bergson",
+        kant: "chat_kant"
     };
 
-    // Message enrichi : Style + Contexte RAG + Question
-    const enrichedMessage = `${STYLE_INJECTION[philosopher]}
-
-Contexte pertinent :
+    // Message enrichi avec RAG context
+    const enrichedMessage = `Contexte pertinent :
 ${ragContext}
 
 Question de l'élève : ${userMessage}`;
@@ -105,7 +103,7 @@ Question de l'élève : ${userMessage}`;
         // Import https pour Node.js
         const https = require('https');
 
-        // Étape 1: Initier la prédiction
+        // Étape 1: Initier la prédiction avec le bon API endpoint
         const payload = JSON.stringify({
             data: [enrichedMessage, []],  // [message, history]
             session_hash: Math.random().toString(36).substring(2, 15)
@@ -115,7 +113,7 @@ Question de l'élève : ${userMessage}`;
             const options = {
                 hostname: SPACE_URL,
                 port: 443,
-                path: `${API_PREFIX}/call/chat_function`,
+                path: `${API_PREFIX}/call/${API_NAMES[philosopher]}`,
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -156,7 +154,7 @@ Question de l'élève : ${userMessage}`;
             const options = {
                 hostname: SPACE_URL,
                 port: 443,
-                path: `${API_PREFIX}/call/chat_function/${eventId}`,
+                path: `${API_PREFIX}/call/${API_NAMES[philosopher]}/${eventId}`,
                 method: 'GET',
                 timeout: 120000  // 120s (2min) pour Space Pro
             };
