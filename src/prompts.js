@@ -106,28 +106,70 @@ ${ragContext}
 Question de l'élève : ${userMessage}`;
 
     try {
-        // Utiliser @gradio/client (version qui fonctionnait - plus robuste que HTTP/SSE manuel)
-        console.log('[SNB] Using @gradio/client (working version)');
-        const { Client } = await import("@gradio/client");
-        const client = await Client.connect(SPACE_URL);
-
-        // Appel au Space via gradio_client (simple et robuste)
-        console.log('[SNB] Calling client.predict("/chat_function", ...)');
-        const result = await client.predict("/chat_function", {
-            message: enrichedMessage,
-            history: [] // Mode one-shot
+        // Utiliser l'API HTTP directe de Gradio (compatible Node.js)
+        // @gradio/client ne fonctionne pas dans Netlify Functions (nécessite un environnement navigateur)
+        console.log('[SNB] Using direct HTTP API (Node.js compatible)');
+        
+        const https = require('https');
+        const url = new URL(SPACE_URL);
+        
+        // Format de payload pour Gradio API
+        const payload = JSON.stringify({
+            data: [enrichedMessage, []],
+            fn_index: 0,
+            session_hash: Math.random().toString(36).substring(2, 15)
         });
 
-        // Extraire la réponse (format retourné par gradio_client)
-        console.log('[SNB] Result received:', typeof result, Array.isArray(result) ? `array[${result.length}]` : 'object');
+        console.log('[SNB] Calling /gradio_api/predict/chat_function...');
         
-        if (result && result.data && Array.isArray(result.data)) {
+        const result = await new Promise((resolve, reject) => {
+            const options = {
+                hostname: url.hostname,
+                port: 443,
+                path: '/gradio_api/predict/chat_function',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Length': Buffer.byteLength(payload)
+                },
+                timeout: 60000  // 60s timeout (Netlify free = 10s, mais on essaie quand même)
+            };
+
+            const req = https.request(options, (res) => {
+                let data = '';
+                res.on('data', (chunk) => { data += chunk; });
+                res.on('end', () => {
+                    try {
+                        const result = JSON.parse(data);
+                        console.log('[SNB] Response received, status:', res.statusCode);
+                        resolve(result);
+                    } catch (e) {
+                        reject(new Error(`Parse error: ${e.message}, data: ${data.substring(0, 200)}`));
+                    }
+                });
+            });
+
+            req.on('error', reject);
+            req.on('timeout', () => {
+                req.destroy();
+                reject(new Error('Request timeout'));
+            });
+
+            req.write(payload);
+            req.end();
+        });
+
+        // Extraire la réponse du format Gradio
+        console.log('[SNB] Result type:', typeof result, Array.isArray(result) ? `array[${result.length}]` : 'object');
+        
+        // Format Gradio API: { data: [text, history] }
+        if (result && result.data && Array.isArray(result.data) && result.data.length >= 2) {
             const history = result.data[1];
-            if (history && history.length > 0) {
+            if (Array.isArray(history) && history.length > 0) {
                 const lastMessage = history[history.length - 1];
-                if (lastMessage && lastMessage[1]) {
-                    // Retirer l'annotation de contexte
+                if (Array.isArray(lastMessage) && lastMessage.length >= 2 && lastMessage[1]) {
                     let response = lastMessage[1];
+                    // Retirer l'annotation de contexte si présente
                     response = response.replace(/\n\n\*\[Contexte:.*?\]\*$/g, '');
                     console.log('[SNB] Response extracted:', response.substring(0, 100));
                     return response;
@@ -135,13 +177,12 @@ Question de l'élève : ${userMessage}`;
             }
         }
 
-        // Fallback si format différent
+        // Fallback: format direct [text, history]
         if (Array.isArray(result) && result.length >= 2) {
-            // Format direct: [text, history]
             const history = result[1];
             if (Array.isArray(history) && history.length > 0) {
                 const lastMessage = history[history.length - 1];
-                if (lastMessage && lastMessage[1]) {
+                if (Array.isArray(lastMessage) && lastMessage.length >= 2 && lastMessage[1]) {
                     let response = lastMessage[1];
                     response = response.replace(/\n\n\*\[Contexte:.*?\]\*$/g, '');
                     return response;
@@ -149,7 +190,7 @@ Question de l'élève : ${userMessage}`;
             }
         }
 
-        throw new Error('Format de réponse inattendu du Space SNB');
+        throw new Error(`Format de réponse inattendu du Space SNB: ${JSON.stringify(result).substring(0, 200)}`);
 
     } catch (error) {
         console.error('[SNB Error]:', error.message);
