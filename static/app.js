@@ -1,3 +1,12 @@
+// === CONFIGURATION API ===
+// URL de l'API Netlify Functions
+// Si le site est sur fjdaz.com, utiliser l'URL complète Netlify
+// Exemple: 'https://votre-site.netlify.app/.netlify/functions/philosopher_rag'
+// Ou si proxy configuré: '/api/philosopher_rag'
+const API_BASE_URL = window.location.hostname === 'fjdaz.com' 
+    ? 'https://chimerical-kashata-65179e.netlify.app/.netlify/functions'
+    : '/.netlify/functions';  // Chemin relatif si sur Netlify
+
 // === DÉTECTION MOBILE ===
 function isMobile() {
     return window.innerWidth <= 768;
@@ -111,7 +120,7 @@ document.querySelectorAll('.qa-form').forEach(form => {
                 return q && a ? [q, a] : null;
             }).filter(h => h !== null);
             
-            const response = await fetch(`/.netlify/functions/philosopher_rag`, {
+            const response = await fetch(`${API_BASE_URL}/philosopher_rag`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -271,7 +280,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }).filter(h => h !== null);
         
         // Appel API
-        const response = await fetch(`/.netlify/functions/philosopher_rag`, {
+        const response = await fetch(`${API_BASE_URL}/philosopher_rag`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -321,7 +330,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialiser chaque philosophe au chargement de la page
   async function initPhilosopher(philosopherId) {
     try {
-      const response = await fetch(`/.netlify/functions/philosopher_rag`, {
+      const response = await fetch(`${API_BASE_URL}/philosopher_rag`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
