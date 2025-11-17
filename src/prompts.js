@@ -111,7 +111,8 @@ Question de l'élève : ${userMessage}`;
         async function predictSync(apiName, payloadObj) {
             const payload = JSON.stringify(payloadObj);
             return new Promise((resolve, reject) => {
-                const path = `${API_PREFIX}/predict/${apiName}`;
+                // Gradio expose les endpoints avec api_name comme //endpoint (double slash)
+                const path = `${API_PREFIX}/predict//${apiName.replace(/^\//, '')}`;
                 const options = {
                     hostname: SPACE_URL,
                     port: 443,
@@ -162,71 +163,61 @@ Question de l'élève : ${userMessage}`;
             });
         }
 
-        // Étape 1: Initier la prédiction avec l'endpoint unique /chat_function
-        const payload = JSON.stringify({
-            data: [enrichedMessage, []],  // [message, history]
-            session_hash: Math.random().toString(36).substring(2, 15)
-        });
+        // Utiliser /call/ avec SSE (format standard pour endpoints nommés)
+        console.log('[SNB] Calling Space bergsonAndFriends via /call/chat_function (SSE)');
+        try {
+            // Fallback vers SSE si predict échoue
+            const payload = JSON.stringify({
+                data: [enrichedMessage, []],
+                session_hash: Math.random().toString(36).substring(2, 15)
+            });
 
-        const eventId = await new Promise((resolve, reject) => {
-            const callPath = `${API_PREFIX}/call/chat_function`;
-            const options = {
-                hostname: SPACE_URL,
-                port: 443,
-                path: callPath,
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Content-Length': Buffer.byteLength(payload)
-                },
-                timeout: 30000  // 30s pour Space Pro
-            };
-            console.log(`[SNB] POST https://${SPACE_URL}${callPath}`);
+            const eventId = await new Promise((resolve, reject) => {
+                // Gradio expose les endpoints nommés avec // (double slash)
+                const callPath = `${API_PREFIX}/call//chat_function`;
+                const options = {
+                    hostname: SPACE_URL,
+                    port: 443,
+                    path: callPath,
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Content-Length': Buffer.byteLength(payload)
+                    },
+                    timeout: 8000  // 8s max (Netlify timeout 10s)
+                };
+                console.log(`[SNB] POST https://${SPACE_URL}${callPath}`);
 
-            const req = https.request(options, (res) => {
-                let data = '';
-                res.on('data', (chunk) => { data += chunk; });
-                res.on('end', async () => {
-                    try {
-                        const result = JSON.parse(data);
-                        if (result.event_id) {
-                            resolve(result.event_id);
-                        } else {
-                            // Certains Spaces n'exposent pas SSE correctement; tenter predict sync
-                            console.warn('[SNB] No event_id returned; trying predict sync fallback');
-                            try {
-                                const response = await predictSync("chat_function", { data: [enrichedMessage, []] });
-                                resolve(`predict:${response}`); // signaler qu'on a déjà la réponse
-                                return;
-                            } catch (e) {
+                const req = https.request(options, (res) => {
+                    let data = '';
+                    res.on('data', (chunk) => { data += chunk; });
+                    res.on('end', async () => {
+                        try {
+                            const result = JSON.parse(data);
+                            if (result.event_id) {
+                                resolve(result.event_id);
+                            } else {
                                 reject(new Error('No event_id returned'));
-                                return;
                             }
+                        } catch (e) {
+                            reject(new Error(`Parse error: ${e.message}`));
                         }
-                    } catch (e) {
-                        reject(new Error(`Parse error: ${e.message}`));
-                    }
+                    });
                 });
+
+                req.on('error', reject);
+                req.on('timeout', () => {
+                    req.destroy();
+                    reject(new Error('Request timeout (Netlify 10s limit)'));
+                });
+
+                req.write(payload);
+                req.end();
             });
 
-            req.on('error', reject);
-            req.on('timeout', () => {
-                req.destroy();
-                reject(new Error('Request timeout'));
-            });
-
-            req.write(payload);
-            req.end();
-        });
-
-        // Si on a déjà la réponse via predict, la retourner
-        if (String(eventId).startsWith('predict:')) {
-            return String(eventId).replace(/^predict:/, '');
-        }
-
-        // Étape 2: Écouter les résultats SSE
+            // Étape 2: Écouter les résultats SSE
         return await new Promise((resolve, reject) => {
-            const ssePath = `${API_PREFIX}/call/chat_function/${eventId}`;
+            const ssePath = `${API_PREFIX}/call//chat_function/${eventId}`;
             const options = {
                 hostname: SPACE_URL,
                 port: 443,
@@ -290,7 +281,7 @@ Question de l'élève : ${userMessage}`;
                     // Fallback si le flux SSE se termine sans résultat
                     console.warn('[SNB] SSE ended; trying predict sync fallback');
                     try {
-                        const response = await predictSync("chat_function", { data: [enrichedMessage, []] });
+                        const response = await predictSync("//chat_function", { data: [enrichedMessage, []] });
                         resolve(response);
                     } catch (e) {
                         reject(new Error('SSE stream ended without completion'));
