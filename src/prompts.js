@@ -87,6 +87,9 @@ async function callSNB(philosopher, ragContext, userMessage) {
     // Rebranché sur bergsonAndFriends (A10G) qui tourne avec version V2 fonctionnelle
     const SPACE_URL = process.env.SNB_BACKEND_URL || "fjdaz-bergsonandfriends.hf.space";
     const API_PREFIX = process.env.SNB_API_PREFIX || "/gradio_api";
+    
+    console.log(`[SNB] callSNB called: philosopher=${philosopher}, SPACE_URL=${SPACE_URL}`);
+    console.log(`[SNB] Message length: ${userMessage.length}, RAG context length: ${ragContext.length}`);
 
     // Styles courts pour injecter dans le message (TU ES le philosophe)
     const STYLE_INJECTION = {

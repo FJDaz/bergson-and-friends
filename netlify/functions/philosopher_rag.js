@@ -113,10 +113,13 @@ exports.handler = async (event, context) => {
             } else {
                 try {
                     console.log('[RAG] Appel SNB Space (peut prendre 30-60s si cold start)...');
+                    console.log('[RAG] Philosopher:', philosopher);
+                    console.log('[RAG] Message preview:', message.substring(0, 50));
                     answer = await callSNB(philosopher, ragContext, message);
-                    console.log('[RAG] Mode SNB Space OK');
+                    console.log('[RAG] Mode SNB Space OK - Réponse reçue:', answer.substring(0, 100));
                 } catch (error) {
                     console.error('[RAG] Erreur SNB, fallback mock:', error.message);
+                    console.error('[RAG] Stack trace:', error.stack);
                     answer = getMockResponse(philosopher, message);
                 }
             }
