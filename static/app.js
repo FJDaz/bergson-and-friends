@@ -103,10 +103,23 @@ document.querySelectorAll('.qa-form').forEach(form => {
         textarea.value = '';
         
         try {
-            const response = await fetch(`/.netlify/functions/${philosopherId}`, {
+            // Récupérer l'historique actuel
+            const historyPairs = Array.from(qaHistory.querySelectorAll('.qa-pair'));
+            const history = historyPairs.map(pair => {
+                const q = pair.querySelector('.question')?.textContent.replace(/^Q:\s*/, '') || '';
+                const a = pair.querySelector('.answer')?.textContent.replace(/^R:\s*/, '') || '';
+                return q && a ? [q, a] : null;
+            }).filter(h => h !== null);
+            
+            const response = await fetch(`/.netlify/functions/philosopher_rag`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question })
+                body: JSON.stringify({
+                    action: 'respond',
+                    philosopher: philosopherId,
+                    message: question,
+                    history: history
+                })
             });
             
             const data = await response.json();
@@ -249,11 +262,24 @@ document.addEventListener('DOMContentLoaded', function() {
       textarea.value = '';
       
       try {
+        // Récupérer l'historique actuel
+        const historyPairs = Array.from(mobileQaHistory.querySelectorAll('.mobile-qa-pair'));
+        const history = historyPairs.map(pair => {
+          const q = pair.querySelector('.mobile-question')?.textContent.replace(/^Q:\s*/, '') || '';
+          const a = pair.querySelector('.mobile-answer')?.textContent || '';
+          return q && a ? [q, a] : null;
+        }).filter(h => h !== null);
+        
         // Appel API
-        const response = await fetch(`/.netlify/functions/${currentPhilosopher}`, {
+        const response = await fetch(`/.netlify/functions/philosopher_rag`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question })
+          body: JSON.stringify({
+            action: 'respond',
+            philosopher: currentPhilosopher,
+            message: question,
+            history: history
+          })
         });
         
         const data = await response.json();

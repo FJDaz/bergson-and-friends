@@ -83,18 +83,22 @@ function buildPrompt(philosopher, question, ragContext) {
  * On injecte le style du philosophe DANS le message pour orienter SNB
  */
 async function callSNB(philosopher, ragContext, userMessage) {
-    const SPACE_URL = "fjdaz-spinoza-nb.hf.space";
-    const API_PREFIX = "/gradio_api";
+    // URL du backend configurable (HF Space par défaut, mais peut être RunPod, Vast.ai, etc.)
+    // Rebranché sur bergsonAndFriends (A10G) qui tourne avec version V2 fonctionnelle
+    const SPACE_URL = process.env.SNB_BACKEND_URL || "fjdaz-bergsonandfriends.hf.space";
+    const API_PREFIX = process.env.SNB_API_PREFIX || "/gradio_api";
 
-    // API name par philosophe
-    const API_NAMES = {
-        spinoza: "chat_spinoza",
-        bergson: "chat_bergson",
-        kant: "chat_kant"
+    // Styles courts pour injecter dans le message (TU ES le philosophe)
+    const STYLE_INJECTION = {
+        bergson: "Tu es Henri Bergson. Utilise des métaphores temporelles, distingue durée vécue vs temps spatialisé.",
+        kant: "Tu es Emmanuel Kant. Utilise les distinctions a priori/a posteriori, phénomène vs noumène.",
+        spinoza: "Tu es Spinoza. Utilise la géométrie des affects, montre les causes nécessaires."
     };
 
-    // Message enrichi avec RAG context
-    const enrichedMessage = `Contexte pertinent :
+    // Message enrichi : Style + Contexte RAG + Question (comme la version qui fonctionnait)
+    const enrichedMessage = `${STYLE_INJECTION[philosopher]}
+
+Contexte pertinent :
 ${ragContext}
 
 Question de l'élève : ${userMessage}`;
@@ -103,17 +107,73 @@ Question de l'élève : ${userMessage}`;
         // Import https pour Node.js
         const https = require('https');
 
-        // Étape 1: Initier la prédiction avec le bon API endpoint
+        // Fallback synchrone si l'API SSE échoue ou n'est pas disponible
+        async function predictSync(apiName, payloadObj) {
+            const payload = JSON.stringify(payloadObj);
+            return new Promise((resolve, reject) => {
+                const path = `${API_PREFIX}/predict/${apiName}`;
+                const options = {
+                    hostname: SPACE_URL,
+                    port: 443,
+                    path,
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Content-Length': Buffer.byteLength(payload)
+                    },
+                    timeout: 60000
+                };
+                console.log(`[SNB] POST (predict) https://${SPACE_URL}${path}`);
+                const req = https.request(options, (res) => {
+                    let data = '';
+                    res.on('data', (chunk) => { data += chunk; });
+                    res.on('end', () => {
+                        try {
+                            const result = JSON.parse(data);
+                            const output = result?.data;
+                            // Forme attendue: [text, history]
+                            if (output && output.length > 1 && Array.isArray(output[1])) {
+                                const lastMessage = output[1][output[1].length - 1];
+                                if (lastMessage && lastMessage[1]) {
+                                    let response = lastMessage[1];
+                                    response = response.replace(/\n\n\*\[Contexte:.*?\]\*$/g, '');
+                                    resolve(response);
+                                    return;
+                                }
+                            }
+                            // Fallback: premier champ en texte
+                            if (output && typeof output[0] === 'string') {
+                                resolve(output[0]);
+                                return;
+                            }
+                            reject(new Error('Unexpected predict output format'));
+                        } catch (e) {
+                            reject(new Error(`Predict parse error: ${e.message}`));
+                        }
+                    });
+                });
+                req.on('error', reject);
+                req.on('timeout', () => {
+                    req.destroy();
+                    reject(new Error('Predict request timeout'));
+                });
+                req.write(payload);
+                req.end();
+            });
+        }
+
+        // Étape 1: Initier la prédiction avec l'endpoint unique /chat_function
         const payload = JSON.stringify({
             data: [enrichedMessage, []],  // [message, history]
             session_hash: Math.random().toString(36).substring(2, 15)
         });
 
         const eventId = await new Promise((resolve, reject) => {
+            const callPath = `${API_PREFIX}/call/chat_function`;
             const options = {
                 hostname: SPACE_URL,
                 port: 443,
-                path: `${API_PREFIX}/call/${API_NAMES[philosopher]}`,
+                path: callPath,
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -121,17 +181,27 @@ Question de l'élève : ${userMessage}`;
                 },
                 timeout: 30000  // 30s pour Space Pro
             };
+            console.log(`[SNB] POST https://${SPACE_URL}${callPath}`);
 
             const req = https.request(options, (res) => {
                 let data = '';
                 res.on('data', (chunk) => { data += chunk; });
-                res.on('end', () => {
+                res.on('end', async () => {
                     try {
                         const result = JSON.parse(data);
                         if (result.event_id) {
                             resolve(result.event_id);
                         } else {
-                            reject(new Error('No event_id returned'));
+                            // Certains Spaces n'exposent pas SSE correctement; tenter predict sync
+                            console.warn('[SNB] No event_id returned; trying predict sync fallback');
+                            try {
+                                const response = await predictSync("chat_function", { data: [enrichedMessage, []] });
+                                resolve(`predict:${response}`); // signaler qu'on a déjà la réponse
+                                return;
+                            } catch (e) {
+                                reject(new Error('No event_id returned'));
+                                return;
+                            }
                         }
                     } catch (e) {
                         reject(new Error(`Parse error: ${e.message}`));
@@ -149,15 +219,22 @@ Question de l'élève : ${userMessage}`;
             req.end();
         });
 
+        // Si on a déjà la réponse via predict, la retourner
+        if (String(eventId).startsWith('predict:')) {
+            return String(eventId).replace(/^predict:/, '');
+        }
+
         // Étape 2: Écouter les résultats SSE
         return await new Promise((resolve, reject) => {
+            const ssePath = `${API_PREFIX}/call/chat_function/${eventId}`;
             const options = {
                 hostname: SPACE_URL,
                 port: 443,
-                path: `${API_PREFIX}/call/${API_NAMES[philosopher]}/${eventId}`,
+                path: ssePath,
                 method: 'GET',
                 timeout: 120000  // 120s (2min) pour Space Pro
             };
+            console.log(`[SNB] GET https://${SPACE_URL}${ssePath}`);
 
             const req = https.request(options, (res) => {
                 let buffer = '';
@@ -209,8 +286,15 @@ Question de l'élève : ${userMessage}`;
                     }
                 });
 
-                res.on('end', () => {
-                    reject(new Error('SSE stream ended without completion'));
+                res.on('end', async () => {
+                    // Fallback si le flux SSE se termine sans résultat
+                    console.warn('[SNB] SSE ended; trying predict sync fallback');
+                    try {
+                        const response = await predictSync("chat_function", { data: [enrichedMessage, []] });
+                        resolve(response);
+                    } catch (e) {
+                        reject(new Error('SSE stream ended without completion'));
+                    }
                 });
             });
 
