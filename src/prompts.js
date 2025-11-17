@@ -90,17 +90,17 @@ async function callSNB(philosopher, ragContext, userMessage) {
     console.log(`[SNB] callSNB called: philosopher=${philosopher}, SPACE_URL=${SPACE_URL}`);
     console.log(`[SNB] Message length: ${userMessage.length}, RAG context length: ${ragContext.length}`);
 
-    // Styles courts pour injecter dans le message (TU ES le philosophe)
-    const STYLE_INJECTION = {
-        bergson: "Tu es Henri Bergson. Utilise des métaphores temporelles, distingue durée vécue vs temps spatialisé.",
-        kant: "Tu es Emmanuel Kant. Utilise les distinctions a priori/a posteriori, phénomène vs noumène.",
-        spinoza: "Tu es Spinoza. Utilise la géométrie des affects, montre les causes nécessaires."
-    };
+    // Utiliser le prompt système COMPLET (style + schèmes logiques + méthode)
+    const systemPrompt = SYSTEM_PROMPTS[philosopher];
+    if (!systemPrompt) {
+        throw new Error(`Pas de prompt système défini pour ${philosopher}`);
+    }
 
-    // Message enrichi : Style + Contexte RAG + Question (comme la version qui fonctionnait)
-    const enrichedMessage = `${STYLE_INJECTION[philosopher]}
+    // Message enrichi : Prompt système complet + Contexte RAG + Question
+    // Le Space HF recevra le prompt système dans le message (car Gradio ne supporte pas les system prompts séparés)
+    const enrichedMessage = `${systemPrompt}
 
-Contexte pertinent :
+Contexte pertinent (extraits de la littérature) :
 ${ragContext}
 
 Question de l'élève : ${userMessage}`;
