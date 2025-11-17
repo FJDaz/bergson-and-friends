@@ -120,13 +120,13 @@ Question de l'élève : ${userMessage}`;
             session_hash: Math.random().toString(36).substring(2, 15)
         });
 
-        console.log('[SNB] Calling /gradio_api/predict/chat_function...');
+        console.log('[SNB] Calling /gradio_api/call/chat_function...');
         
         const result = await new Promise((resolve, reject) => {
             const options = {
                 hostname: url.hostname,
                 port: 443,
-                path: '/gradio_api/predict/chat_function',
+                path: '/gradio_api/call/chat_function',
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
