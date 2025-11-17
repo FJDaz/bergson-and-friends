@@ -5,7 +5,9 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@gradio/client": "^0.16.0"
+  },
   "scripts": {
     "test": "node test_system_b.js"
   }

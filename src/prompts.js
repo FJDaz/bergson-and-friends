@@ -85,9 +85,8 @@ function buildPrompt(philosopher, question, ragContext) {
 async function callSNB(philosopher, ragContext, userMessage) {
     // URL du backend configurable (HF Space par défaut, mais peut être RunPod, Vast.ai, etc.)
     // Rebranché sur bergsonAndFriends (A10G) qui tourne avec version V2 fonctionnelle
-    const SPACE_URL = process.env.SNB_BACKEND_URL || "fjdaz-bergsonandfriends.hf.space";
-    const API_PREFIX = process.env.SNB_API_PREFIX || "/gradio_api";
-    
+    const SPACE_URL = process.env.SNB_BACKEND_URL || "https://fjdaz-bergsonandfriends.hf.space";
+
     console.log(`[SNB] callSNB called: philosopher=${philosopher}, SPACE_URL=${SPACE_URL}`);
     console.log(`[SNB] Message length: ${userMessage.length}, RAG context length: ${ragContext.length}`);
 
@@ -107,199 +106,50 @@ ${ragContext}
 Question de l'élève : ${userMessage}`;
 
     try {
-        // Import https pour Node.js
-        const https = require('https');
+        // Utiliser @gradio/client (version qui fonctionnait - plus robuste que HTTP/SSE manuel)
+        console.log('[SNB] Using @gradio/client (working version)');
+        const { Client } = await import("@gradio/client");
+        const client = await Client.connect(SPACE_URL);
 
-        // Fallback synchrone si l'API SSE échoue ou n'est pas disponible
-        async function predictSync(apiName, payloadObj) {
-            const payload = JSON.stringify(payloadObj);
-            return new Promise((resolve, reject) => {
-                // Gradio expose les endpoints avec api_name comme //endpoint (double slash)
-                const path = `${API_PREFIX}/predict//${apiName.replace(/^\//, '')}`;
-                const options = {
-                    hostname: SPACE_URL,
-                    port: 443,
-                    path,
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Content-Length': Buffer.byteLength(payload)
-                    },
-                    timeout: 60000
-                };
-                console.log(`[SNB] POST (predict) https://${SPACE_URL}${path}`);
-                const req = https.request(options, (res) => {
-                    let data = '';
-                    res.on('data', (chunk) => { data += chunk; });
-                    res.on('end', () => {
-                        try {
-                            const result = JSON.parse(data);
-                            const output = result?.data;
-                            // Forme attendue: [text, history]
-                            if (output && output.length > 1 && Array.isArray(output[1])) {
-                                const lastMessage = output[1][output[1].length - 1];
-                                if (lastMessage && lastMessage[1]) {
-                                    let response = lastMessage[1];
-                                    response = response.replace(/\n\n\*\[Contexte:.*?\]\*$/g, '');
-                                    resolve(response);
-                                    return;
-                                }
-                            }
-                            // Fallback: premier champ en texte
-                            if (output && typeof output[0] === 'string') {
-                                resolve(output[0]);
-                                return;
-                            }
-                            reject(new Error('Unexpected predict output format'));
-                        } catch (e) {
-                            reject(new Error(`Predict parse error: ${e.message}`));
-                        }
-                    });
-                });
-                req.on('error', reject);
-                req.on('timeout', () => {
-                    req.destroy();
-                    reject(new Error('Predict request timeout'));
-                });
-                req.write(payload);
-                req.end();
-            });
+        // Appel au Space via gradio_client (simple et robuste)
+        console.log('[SNB] Calling client.predict("/chat_function", ...)');
+        const result = await client.predict("/chat_function", {
+            message: enrichedMessage,
+            history: [] // Mode one-shot
+        });
+
+        // Extraire la réponse (format retourné par gradio_client)
+        console.log('[SNB] Result received:', typeof result, Array.isArray(result) ? `array[${result.length}]` : 'object');
+        
+        if (result && result.data && Array.isArray(result.data)) {
+            const history = result.data[1];
+            if (history && history.length > 0) {
+                const lastMessage = history[history.length - 1];
+                if (lastMessage && lastMessage[1]) {
+                    // Retirer l'annotation de contexte
+                    let response = lastMessage[1];
+                    response = response.replace(/\n\n\*\[Contexte:.*?\]\*$/g, '');
+                    console.log('[SNB] Response extracted:', response.substring(0, 100));
+                    return response;
+                }
+            }
         }
 
-        // Utiliser /call/ avec SSE (format standard pour endpoints nommés)
-        console.log('[SNB] Calling Space bergsonAndFriends via /call/chat_function (SSE)');
-        try {
-            // Fallback vers SSE si predict échoue
-            const payload = JSON.stringify({
-                data: [enrichedMessage, []],
-                session_hash: Math.random().toString(36).substring(2, 15)
-            });
+        // Fallback si format différent
+        if (Array.isArray(result) && result.length >= 2) {
+            // Format direct: [text, history]
+            const history = result[1];
+            if (Array.isArray(history) && history.length > 0) {
+                const lastMessage = history[history.length - 1];
+                if (lastMessage && lastMessage[1]) {
+                    let response = lastMessage[1];
+                    response = response.replace(/\n\n\*\[Contexte:.*?\]\*$/g, '');
+                    return response;
+                }
+            }
+        }
 
-            const eventId = await new Promise((resolve, reject) => {
-                // Gradio expose les endpoints nommés avec // (double slash)
-                const callPath = `${API_PREFIX}/call//chat_function`;
-                const options = {
-                    hostname: SPACE_URL,
-                    port: 443,
-                    path: callPath,
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Content-Length': Buffer.byteLength(payload)
-                    },
-                    timeout: 8000  // 8s max (Netlify timeout 10s)
-                };
-                console.log(`[SNB] POST https://${SPACE_URL}${callPath}`);
-
-                const req = https.request(options, (res) => {
-                    let data = '';
-                    res.on('data', (chunk) => { data += chunk; });
-                    res.on('end', async () => {
-                        try {
-                            const result = JSON.parse(data);
-                            if (result.event_id) {
-                                resolve(result.event_id);
-                            } else {
-                                reject(new Error('No event_id returned'));
-                            }
-                        } catch (e) {
-                            reject(new Error(`Parse error: ${e.message}`));
-                        }
-                    });
-                });
-
-                req.on('error', reject);
-                req.on('timeout', () => {
-                    req.destroy();
-                    reject(new Error('Request timeout (Netlify 10s limit)'));
-                });
-
-                req.write(payload);
-                req.end();
-            });
-
-            // Étape 2: Écouter les résultats SSE
-        return await new Promise((resolve, reject) => {
-            const ssePath = `${API_PREFIX}/call//chat_function/${eventId}`;
-            const options = {
-                hostname: SPACE_URL,
-                port: 443,
-                path: ssePath,
-                method: 'GET',
-                timeout: 120000  // 120s (2min) pour Space Pro
-            };
-            console.log(`[SNB] GET https://${SPACE_URL}${ssePath}`);
-
-            const req = https.request(options, (res) => {
-                let buffer = '';
-
-                res.on('data', (chunk) => {
-                    buffer += chunk.toString();
-                    const lines = buffer.split('\n');
-                    buffer = lines.pop();
-
-                    for (const line of lines) {
-                        if (line.startsWith('data: ')) {
-                            try {
-                                const data = JSON.parse(line.substring(6));
-                                console.log('[SNB SSE]', data.msg, JSON.stringify(data).substring(0, 200));
-
-                                if (data.msg === 'process_completed') {
-                                    const output = data.output?.data;
-                                    console.log('[SNB] Output:', JSON.stringify(output));
-
-                                    if (output && output.length > 1 && Array.isArray(output[1])) {
-                                        const lastMessage = output[1][output[1].length - 1];
-                                        console.log('[SNB] Last message:', lastMessage);
-
-                                        if (lastMessage && lastMessage[1]) {
-                                            let response = lastMessage[1];
-                                            response = response.replace(/\n\n\*\[Contexte:.*?\]\*$/g, '');
-                                            console.log('[SNB] Final response:', response.substring(0, 100));
-                                            resolve(response);
-                                            req.destroy();
-                                            return;
-                                        }
-                                    }
-
-                                    console.error('[SNB] Unexpected output format:', output);
-                                    reject(new Error('Unexpected output format'));
-                                    req.destroy();
-                                    return;
-                                }
-
-                                if (data.msg === 'process_error') {
-                                    reject(new Error(`Space error: ${data.error}`));
-                                    req.destroy();
-                                    return;
-                                }
-                            } catch (e) {
-                                // Ligne SSE non-JSON, ignorer
-                            }
-                        }
-                    }
-                });
-
-                res.on('end', async () => {
-                    // Fallback si le flux SSE se termine sans résultat
-                    console.warn('[SNB] SSE ended; trying predict sync fallback');
-                    try {
-                        const response = await predictSync("//chat_function", { data: [enrichedMessage, []] });
-                        resolve(response);
-                    } catch (e) {
-                        reject(new Error('SSE stream ended without completion'));
-                    }
-                });
-            });
-
-            req.on('error', reject);
-            req.on('timeout', () => {
-                req.destroy();
-                reject(new Error('SSE timeout'));
-            });
-
-            req.end();
-        });
+        throw new Error('Format de réponse inattendu du Space SNB');
 
     } catch (error) {
         console.error('[SNB Error]:', error.message);
