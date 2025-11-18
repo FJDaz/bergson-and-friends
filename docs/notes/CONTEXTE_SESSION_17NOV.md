@@ -229,4 +229,237 @@ const result = await client.predict("/chat_function", {
 **Dernière modification** : 17 novembre 2025 - 15:45
 **Status** : Code prêt, en attente d'upload `app.js` et test
 
+---
+
+## 📅 Mises à Jour - 18 Novembre 2025
+
+### ✅ Actions Complétées
+
+#### 1. Nettoyage Complet du Dépôt ✅
+
+**Problème identifié :** Structure confuse avec doublons, archives obsolètes, submodules mal configurés
+
+**Actions réalisées :**
+- ✅ **Suppression doublons majeurs :**
+  - `bergson-and-friends/` (6.3M) → Supprimé (doublon frontend)
+  - `static/static/` → Supprimé (doublon imbriqué)
+  - `RAG/` (racine) → Supprimé (fichiers .bak uniquement)
+  - `bergson-and-friends/RAG/` → Supprimé (doublon)
+
+- ✅ **Suppression archives obsolètes :**
+  - `spinoza_NB_archive/` → Supprimé (archivé dans docs)
+  - `spinoza_NB_backup_mirror/` → Supprimé (backup Git inutile, ~50MB)
+  - `spinoza_NB_fastapi/` → Supprimé (version non utilisée)
+
+- ✅ **Nettoyage fichiers de test :**
+  - `app_local.js`, `index_local.html`, `index_netlify.html` → Supprimés
+  - `test-bergson*.html` → Supprimés
+  - Logs racine → Déplacés vers `docs/logs/`
+
+- ✅ **Réorganisation documentation :**
+  - Fichiers MD racine → Déplacés vers `docs/notes/` ou `docs/tutos/`
+  - `CONTEXTE_SESSION_17NOV.md` → Déplacé vers `docs/notes/`
+
+**Gain estimé :** ~50-60% de réduction de taille, déploiement Netlify plus rapide
+
+#### 2. Correction Submodules Git ✅
+
+**Problème :** Dossiers avec `.git/` mais pas dans `.gitmodules` → Erreurs Git
+
+**Actions réalisées :**
+- ✅ Suppression `.git/` dans :
+  - `SNB_orchestrator/` → Converti en dossier normal
+  - `bergsonAndFriends/` → Converti en dossier normal
+  - `spinoza_NB/` → Converti en dossier normal
+
+- ✅ Retrait de l'index Git :
+  ```bash
+  git rm --cached SNB_orchestrator/
+  git rm --cached bergsonAndFriends/
+  git rm --cached spinoza_NB/
+  ```
+
+- ✅ Réajout comme dossiers normaux :
+  ```bash
+  git add SNB_orchestrator/ bergsonAndFriends/ spinoza_NB/
+  ```
+
+**Résultat :** Plus d'erreurs Git, structure propre
+
+#### 3. Renommage `bergsonAndFriends/` → `bergsonAndFriends_HF/` ✅
+
+**Raison :** Clarifier que ce dossier contient le code source du Space HF
+
+**Action réalisée :**
+- ✅ Renommage avec `git mv` (préserve historique Git)
+- ✅ 53 fichiers renommés
+- ✅ Commit et push réussis
+
+**Statut :** Dossier renommé et pushé sur GitHub
+
+#### 4. Documentation et Organisation ✅
+
+**Nouveaux fichiers créés :**
+- ✅ `docs/notes/RAPPORT_ETAT_PROJET.md` - Audit complet structure dépôt
+- ✅ `docs/notes/DOUBLONS_RESTANTS.md` - Rapport doublons restants
+- ✅ `docs/notes/UTILISATION_BERGSONANDFRIENDS.md` - Explication usage dossier
+- ✅ `docs/notes/FIX_SUBMODULES.md` - Guide correction submodules
+- ✅ `docs/notes/OPTIONS_ELIMINATION_BERGSONANDFRIENDS_HF.md` - Options élimination
+- ✅ `docs/notes/ANALYSE_GPU_OPTIONS.md` - Analyse options GPU HF Spaces
+- ✅ `docs/notes/CONFIG_MIN_QWEN_14B.md` - Configuration minimale Qwen 14B
+- ✅ `docs/notes/EXPLICATION_RAILWAY_NETLIFY.md` - Explication services (noob)
+- ✅ `docs/notes/TERMES_SERVICES_CLOUD.md` - Termes techniques services cloud
+- ✅ `docs/notes/ENDPOINTS_GRADIO_BERGSONANDFRIENDS.txt` - Endpoints API Gradio
+
+**Mise à jour documentation existante :**
+- ✅ `docs/references/methode-meta-skills.md` - Ajout section `logs/` et règle `garbage/`
+- ✅ `docs/README.md` - Ajout section `docs/logs/`
+- ✅ `.gitignore` - Règle absolue : `garbage/` ne doit JAMAIS être pushé
+
+#### 5. Structure Dépôt Finale ✅
+
+**Dossiers actifs :**
+- ✅ `/index_spinoza.html` → Frontend actif (Spinoza, Railway backend)
+- ✅ `/netlify/functions/` → Netlify Functions (actif)
+- ✅ `/bergsonAndFriends_HF/` → Code source Space HF (renommé)
+- ✅ `/data/RAG/` → Corpus RAG source (version propre)
+- ✅ `/docs/` → Documentation complète
+- ✅ `/docs/logs/` → Logs (Railway, etc.)
+
+**Fichiers supprimés/déplacés :**
+- ❌ `bergson-and-friends/` → Supprimé
+- ❌ Archives Spinoza → Supprimées
+- ❌ Doublons `static/`, `netlify/` → Supprimés
+- ❌ Fichiers de test → Supprimés
+
+#### 6. Suppression Dossiers Obsolètes ✅
+
+**Dossiers supprimés :**
+- ✅ `spinoza_NB/` (104K) → Ancien Space HF (T4 insuffisant, ne démarre plus)
+  - Remplacé par `bergsonAndFriends` (A10G, fonctionnel)
+  - Contenait plusieurs versions obsolètes d'app.py
+  - 20 fichiers supprimés
+
+- ✅ `SNB_orchestrator/` (32K) → Orchestrateur obsolète
+  - Appelait `FJDaz/spinoza_NB` (Space obsolète)
+  - Non utilisé dans le code actif
+  - Remplacé par appels directs au Space `bergsonAndFriends`
+
+**Résultat :** ~136K supprimés, structure plus claire
+
+#### 7. Commits Réalisés (18 Nov)
+
+**Commits principaux :**
+1. `90c48e1` - Remove: Delete obsolete spinoza_NB and SNB_orchestrator
+2. `1d4f3eb` - Rename: bergsonAndFriends -> bergsonAndFriends_HF
+3. `e2ec9d4` - Add: documentation for submodules fix and duplicates analysis
+4. `107b747` - Fix: Convert submodules to normal directories
+5. `77852ec` - Remove: delete moved MD files and test files from root
+6. `0b96d24` - Reorganize: move MD files to docs/, remove test files
+7. `5b18265` - Clean: remove duplicates, add docs, update gitignore with garbage rule
+8. `ad0f925` - Clean: move obsolete files to garbage/ + add final project status
+
+**Statut Git :** ✅ Tous les changements pushés sur GitHub
+
+---
+
+## 📊 État Actuel du Projet (18 Nov 2025)
+
+### ✅ Architecture Fonctionnelle
+
+**Frontend :**
+- ✅ `index_spinoza.html` → Interface Spinoza (responsive)
+- ✅ Backend : Railway (`https://bergson-api-production.up.railway.app`)
+- ✅ Styles : `https://fjdaz.com/bergson/statics/style.css`
+
+**Backend :**
+- ✅ **HF Space** : `bergsonAndFriends` (A10G, 24GB VRAM)
+  - URL : `https://fjdaz-bergsonandfriends.hf.space`
+  - API : `//chat_function`, `/lambda`, `/lambda_1`
+  - Modèle : Qwen 2.5 14B + LoRA Spinoza
+
+- ✅ **Railway** : Backend API (si utilisé)
+  - URL : `https://bergson-api-production.up.railway.app`
+  - ⚠️ Logs montrent erreurs mise/pyenv (à vérifier)
+
+- ✅ **Netlify Functions** : Bridge HF Space
+  - `philosopher_rag.js` → Function principale RAG
+  - `spinoza.js` → Function Spinoza
+  - `spinoza_hf.js` → Bridge HF Space
+
+### 📁 Structure Dépôt (Nettoyée)
+
+**Dossiers principaux :**
+- `/index_spinoza.html` → Frontend actif
+- `/netlify/functions/` → Netlify Functions
+- `/bergsonAndFriends_HF/` → Code source Space HF (renommé)
+- `/data/RAG/` → Corpus RAG source
+- `/docs/` → Documentation complète
+- `/docs/logs/` → Logs (Railway, etc.)
+- `/garbage/` → Fichiers obsolètes (NE JAMAIS PUSH)
+
+**Fichiers supprimés :**
+- ❌ `bergson-and-friends/` (6.3M)
+- ❌ Archives Spinoza (~50MB)
+- ❌ Doublons `static/`, `netlify/`
+- ❌ Fichiers de test
+
+### ⚠️ Points d'Attention
+
+1. **Railway Backend**
+   - ⚠️ Logs montrent erreurs mise/pyenv
+   - ⚠️ Statut à vérifier : `/health` endpoint
+
+2. **Netlify Déploiement**
+   - ⚠️ Crash récent (à investiguer)
+   - ⚠️ Configuration `publish = "."` publie tout (à optimiser)
+
+3. **HF Space**
+   - ✅ Space actif
+   - ⚠️ Coût : ~$1/h (A10G)
+   - ⚠️ Risque suspension si impayés
+
+---
+
+## 📚 Documentation Créée (18 Nov)
+
+### Rapports et Analyses
+- `RAPPORT_ETAT_PROJET.md` - Audit complet structure dépôt
+- `DOUBLONS_RESTANTS.md` - Rapport doublons restants
+- `UTILISATION_BERGSONANDFRIENDS.md` - Explication usage dossier
+- `FIX_SUBMODULES.md` - Guide correction submodules
+- `OPTIONS_ELIMINATION_BERGSONANDFRIENDS_HF.md` - Options élimination
+- `ANALYSE_GPU_OPTIONS.md` - Analyse options GPU HF Spaces
+- `CONFIG_MIN_QWEN_14B.md` - Configuration minimale Qwen 14B
+
+### Explications et Guides
+- `EXPLICATION_RAILWAY_NETLIFY.md` - Explication services (noob)
+- `TERMES_SERVICES_CLOUD.md` - Termes techniques services cloud
+- `ENDPOINTS_GRADIO_BERGSONANDFRIENDS.txt` - Endpoints API Gradio
+
+### Mise à Jour Documentation
+- `methode-meta-skills.md` - Ajout section `logs/` et règle `garbage/`
+- `docs/README.md` - Ajout section `docs/logs/`
+- `.gitignore` - Règle absolue : `garbage/` ne doit JAMAIS être pushé
+
+---
+
+## 🎯 Prochaines Étapes
+
+### Court Terme
+1. ⏳ Vérifier statut Railway backend
+2. ⏳ Investiguer crash Netlify
+3. ⏳ Optimiser `netlify.toml` (publish directory)
+4. ⏳ Tester déploiement Netlify après nettoyage
+
+### Moyen Terme
+1. ⏳ Confirmer URL frontend sur fjdaz.com
+2. ⏳ Tester flux complet (frontend → Railway/Netlify → HF Space)
+3. ⏳ Monitorer coûts HF Space (A10G ~$1/h)
+
+---
+
+**Dernière modification** : 18 novembre 2025 - 23:20
+**Status** : Dépôt nettoyé, structure clarifiée, documentation complète
+
 
