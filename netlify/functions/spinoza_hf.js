@@ -5,17 +5,14 @@ const QUESTIONS_BAC = [
 ];
 
 let gradioClient = null;
-let Client = null;
 
 async function getClient() {
-  if (!Client) {
-    // Dynamic import pour @gradio/client (ESM)
-    const gradio = await import("@gradio/client");
-    Client = gradio.Client;
-  }
-
   if (!gradioClient) {
-    gradioClient = await Client.connect("FJDaz/bergsonAndFriends");
+    // Dynamic import pour @gradio/client (ESM)
+    const { client } = await import("@gradio/client");
+    console.log('[DEBUG] Connecting to HF Space...');
+    gradioClient = await client("FJDaz/bergsonAndFriends");
+    console.log('[DEBUG] Gradio client connected');
   }
   return gradioClient;
 }
