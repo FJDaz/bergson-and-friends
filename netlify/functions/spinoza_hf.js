@@ -1,5 +1,3 @@
-const { Client } = require("@gradio/client");
-
 const QUESTIONS_BAC = [
   "La liberté est-elle une illusion ?",
   "Suis-je esclave de mes désirs ?",
@@ -7,8 +5,15 @@ const QUESTIONS_BAC = [
 ];
 
 let gradioClient = null;
+let Client = null;
 
 async function getClient() {
+  if (!Client) {
+    // Dynamic import pour @gradio/client (ESM)
+    const gradio = await import("@gradio/client");
+    Client = gradio.Client;
+  }
+
   if (!gradioClient) {
     gradioClient = await Client.connect("FJDaz/bergsonAndFriends");
   }
