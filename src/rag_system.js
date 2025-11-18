@@ -3,22 +3,22 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * Charge un corpus depuis le dossier RAG_clean
+ * Charge un corpus depuis le dossier data/RAG
  */
 function loadCorpus(philosopher) {
     const corpusFiles = {
-        bergson: 'corpus_bergson_27k_dialogique_clean.md',
-        kant: 'corpus_kant_20k.txt_clean.md',
-        spinoza: 'Corpus Spinoza Dialogique 18k - Éthique II-IV_clean.md'
+        bergson: 'corpus_bergson_27k_dialogique.md',
+        kant: 'corpus_kant_20k.txt.md',
+        spinoza: 'Corpus Spinoza Dialogique 18k - Éthique II-IV.md'
     };
 
     const glossaireFiles = {
-        bergson: 'glossaire_bergson_conversationnel_clean.md',
-        kant: 'glossaire_kant_conversationnel_clean.md',
-        spinoza: 'Glossaire Conversationnel Spinoza - 12 Concepts_clean.md'
+        bergson: 'glossaire_bergson_conversationnel.md',
+        kant: 'glossaire_kant_conversationnel.md',
+        spinoza: 'Glossaire Conversationnel Spinoza - 12 Concepts.md'
     };
 
-    const ragDir = path.join(__dirname, '../RAG_clean');
+    const ragDir = path.join(__dirname, '../data/RAG');
 
     const corpusPath = path.join(ragDir, corpusFiles[philosopher]);
     const glossairePath = path.join(ragDir, glossaireFiles[philosopher]);

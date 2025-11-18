@@ -112,8 +112,8 @@ module.exports = { fixEncoding, fixFile, fixDirectory };
 
 // Usage CLI
 if (require.main === module) {
-    const inputDir = path.join(__dirname, '../../RAG');
-    const outputDir = path.join(__dirname, '../RAG_clean');
+    const inputDir = path.join(__dirname, '../data/RAG');
+    const outputDir = path.join(__dirname, '../data/RAG');
 
     fixDirectory(inputDir, outputDir);
 }

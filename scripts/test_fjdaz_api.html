@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test API fjdaz.com</title>
+</head>
+<body>
+    <h1>Test API Netlify depuis fjdaz.com</h1>
+    <button onclick="testInit()">Test Init Spinoza</button>
+    <button onclick="testRespond()">Test Respond</button>
+    <pre id="result"></pre>
+
+    <script>
+        const API_BASE_URL = window.location.hostname === 'fjdaz.com' 
+            ? 'https://chimerical-kashata-65179e.netlify.app/.netlify/functions'
+            : '/.netlify/functions';
+
+        async function testInit() {
+            const resultEl = document.getElementById('result');
+            resultEl.textContent = 'Test en cours...';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/philosopher_rag`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'init',
+                        philosopher: 'spinoza'
+                    })
+                });
+
+                const data = await response.json();
+                resultEl.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultEl.textContent = `Erreur: ${error.message}\n\nStack: ${error.stack}`;
+            }
+        }
+
+        async function testRespond() {
+            const resultEl = document.getElementById('result');
+            resultEl.textContent = 'Test en cours...';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/philosopher_rag`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'respond',
+                        philosopher: 'spinoza',
+                        message: 'Bonjour',
+                        history: []
+                    })
+                });
+
+                const data = await response.json();
+                resultEl.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultEl.textContent = `Erreur: ${error.message}\n\nStack: ${error.stack}`;
+            }
+        }
+
+        // Afficher la configuration
+        document.addEventListener('DOMContentLoaded', () => {
+            const info = document.createElement('div');
+            info.innerHTML = `
+                <h2>Configuration</h2>
+                <p><strong>Hostname:</strong> ${window.location.hostname}</p>
+                <p><strong>API_BASE_URL:</strong> ${API_BASE_URL}</p>
+                <p><strong>URL complète:</strong> ${API_BASE_URL}/philosopher_rag</p>
+            `;
+            document.body.insertBefore(info, document.getElementById('result'));
+        });
+    </script>
+</body>
+</html>
+
+
