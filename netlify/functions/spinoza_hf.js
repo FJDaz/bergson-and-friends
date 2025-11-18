@@ -40,7 +40,7 @@ exports.handler = async (event) => {
 
     if (action === 'chat') {
       const client = await getClient();
-      const result = await client.predict("/chat_function", {
+      const result = await client.predict("//chat_function", {
         message,
         history: history || []
       });

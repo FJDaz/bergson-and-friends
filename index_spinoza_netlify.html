@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spinoza - Bergson and Friends (Netlify)</title>
+<link rel="stylesheet" href="https://fjdaz.com/bergson/statics/style.css">
+<link rel="stylesheet" href="https://fjdaz.com/bergson/statics/responsive.css" media="screen and (max-width: 768px)">
+</head>
+<body>
+<div class="desktop-version">
+<header>
+  <img src="https://fjdaz.com/bergson/statics/img/BergsonAndFriendsLOGO.png">
+</header>
+<main>
+  <section class="philosophers">
+
+    <!-- Spinoza uniquement -->
+    <article class="philosopher" id="spinoza">
+      <button class="philosopher-trigger">
+        <h2>Baruch <span>Spinoza</span></h2>
+        <img src="https://fjdaz.com/bergson/statics/img/Spinoza.png" alt="Baruch Spinoza">
+      </button>
+      <div class="dialogue" hidden>
+        <div class="qa-history"></div>
+        <form class="qa-form">
+          <textarea id="question-spinoza" name="question" placeholder="Pose ta question à Spinoza..."></textarea>
+          <input type="image" src="https://fjdaz.com/bergson/statics/img/Submit.png" alt="envoyer">
+        </form>
+      </div>
+    </article>
+
+  </section>
+</main>
+</div>
+
+<!-- VERSION MOBILE DÉDIÉE -->
+<div class="mobile-version" style="display: none;">
+  <header>
+    <img src="https://fjdaz.com/bergson/statics/img/BergsonAndFriendsLOGO.png" alt="Bergson and Friends">
+  </header>
+
+  <main>
+    <!-- Spinoza - Version mobile -->
+    <section class="mobile-philosophers">
+      <article class="mobile-philosopher" id="mobile-spinoza" data-philosopher="spinoza">
+        <button class="mobile-philosopher-trigger">
+          <img src="https://fjdaz.com/bergson/statics/img/Spinoza.png" alt="Baruch Spinoza">
+          <span>Baruch Spinoza</span>
+        </button>
+      </article>
+    </section>
+
+    <!-- Zone conversation mobile - apparaît quand Spinoza est sélectionné -->
+    <section class="mobile-conversation" id="mobile-conversation" style="display: none;">
+
+      <!-- Spinoza actif en haut -->
+      <div class="mobile-active-philosopher">
+        <img id="mobile-active-img" src="https://fjdaz.com/bergson/statics/img/Spinoza.png" alt="Baruch Spinoza">
+        <h2 id="mobile-active-name">Baruch Spinoza</h2>
+      </div>
+
+      <!-- Zone conversation -->
+      <div class="mobile-conversation-content">
+        <div class="mobile-conversation-right">
+          <!-- Greeting initial -->
+          <div class="mobile-greeting" id="mobile-greeting">Bonjour, cher ami. De quel problème désirez-vous que nous nous entretenions ?</div>
+
+          <!-- Historique Q/A -->
+          <div class="mobile-qa-history" id="mobile-qa-history">
+            <!-- Les Q/A apparaîtront ici dynamiquement -->
+          </div>
+
+          <!-- Formulaire -->
+          <form class="mobile-qa-form" id="mobile-qa-form">
+            <textarea id="mobile-question-spinoza" placeholder="Posez votre question à Spinoza..." rows="3"></textarea>
+            <button type="submit">Envoyer</button>
+          </form>
+        </div>
+      </div>
+
+    </section>
+  </main>
+</div>
+
+<script>
+// Configuration API Netlify Function
+const NETLIFY_FUNCTION_URL = '/.netlify/functions/spinoza_hf';
+
+// État conversation
+let conversationHistory = [];
+
+// Détection mobile/desktop
+const isMobile = window.innerWidth <= 768;
+const desktopVersion = document.querySelector('.desktop-version');
+const mobileVersion = document.querySelector('.mobile-version');
+
+// Afficher la bonne version
+if (isMobile) {
+  desktopVersion.style.display = 'none';
+  mobileVersion.style.display = 'block';
+} else {
+  desktopVersion.style.display = 'block';
+  mobileVersion.style.display = 'none';
+}
+
+// Gérer le resize
+window.addEventListener('resize', () => {
+  const nowMobile = window.innerWidth <= 768;
+  if (nowMobile !== isMobile) {
+    location.reload(); // Recharger si changement de mode
+  }
+});
+
+// Éléments DOM Desktop
+const article = document.getElementById('spinoza');
+const trigger = article?.querySelector('.philosopher-trigger');
+const dialogue = article?.querySelector('.dialogue');
+const form = article?.querySelector('.qa-form');
+const textarea = article?.querySelector('textarea');
+const history = article?.querySelector('.qa-history');
+
+// Éléments DOM Mobile
+const mobileTrigger = document.getElementById('mobile-spinoza')?.querySelector('.mobile-philosopher-trigger');
+const mobileConversation = document.getElementById('mobile-conversation');
+const mobileForm = document.getElementById('mobile-qa-form');
+const mobileTextarea = document.getElementById('mobile-question-spinoza');
+const mobileHistory = document.getElementById('mobile-qa-history');
+const mobileGreeting = document.getElementById('mobile-greeting');
+
+console.log('✅ Spinoza interface chargée (Netlify Mode)');
+console.log('📡 Backend:', NETLIFY_FUNCTION_URL);
+console.log('📱 Mode:', isMobile ? 'Mobile' : 'Desktop');
+
+// Fonction d'initialisation
+async function initConversation() {
+  if (conversationHistory.length) return; // Déjà initialisé
+
+  console.log('[INIT] Appel Netlify Function (action: init)...');
+  try {
+    const response = await fetch(NETLIFY_FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'init' })
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const data = await response.json();
+    console.log('[INIT] ✅ Reçu:', data);
+
+    conversationHistory = data.history;
+
+    // Mettre à jour le greeting mobile
+    if (isMobile && mobileGreeting && data.greeting) {
+      mobileGreeting.textContent = data.greeting;
+    }
+
+    renderHistory();
+
+    if (isMobile && mobileTextarea) {
+      mobileTextarea.focus();
+    } else if (textarea) {
+      textarea.focus();
+    }
+
+  } catch (error) {
+    console.error('[INIT] ❌ Erreur:', error);
+    alert(`Erreur init Spinoza: ${error.message}\n\nVérifie que Netlify Functions est accessible.`);
+  }
+}
+
+// Clic sur Spinoza (Desktop)
+if (trigger) {
+  trigger.addEventListener('click', async () => {
+    console.log('🖱️ Clic sur Spinoza détecté (Desktop)');
+    dialogue.hidden = !dialogue.hidden;
+
+    // Init conversation si première ouverture
+    if (!conversationHistory.length && !dialogue.hidden) {
+      await initConversation();
+    }
+  });
+}
+
+// Clic sur Spinoza (Mobile)
+if (mobileTrigger) {
+  mobileTrigger.addEventListener('click', async () => {
+    console.log('🖱️ Clic sur Spinoza détecté (Mobile)');
+
+    // Afficher la conversation
+    if (mobileConversation) {
+      mobileConversation.style.display = 'block';
+
+      // Masquer la sélection de philosophe
+      document.querySelector('.mobile-philosophers')?.style.setProperty('display', 'none');
+
+      // Init conversation si première ouverture
+      if (!conversationHistory.length) {
+        await initConversation();
+      }
+    }
+  });
+}
+
+// Fonction de soumission (commune desktop/mobile)
+async function submitQuestion(userMessage) {
+  if (!userMessage.trim()) return;
+
+  console.log('[CHAT] Message:', userMessage);
+
+  // Désactiver pendant traitement
+  if (textarea) {
+    textarea.disabled = true;
+    const submitBtn = form?.querySelector('input[type="image"]');
+    if (submitBtn) submitBtn.style.opacity = '0.5';
+  }
+
+  if (mobileTextarea) {
+    mobileTextarea.disabled = true;
+    const mobileSubmitBtn = mobileForm?.querySelector('button[type="submit"]');
+    if (mobileSubmitBtn) mobileSubmitBtn.disabled = true;
+  }
+
+  try {
+    const response = await fetch(NETLIFY_FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'chat',
+        message: userMessage,
+        history: conversationHistory
+      })
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const data = await response.json();
+    console.log('[CHAT] ✅ Réponse:', data);
+
+    // Mettre à jour historique
+    conversationHistory = data.history;
+    renderHistory();
+
+    // Réinitialiser textarea
+    if (textarea) textarea.value = '';
+    if (mobileTextarea) mobileTextarea.value = '';
+
+  } catch (error) {
+    console.error('[CHAT] ❌ Erreur:', error);
+    alert(`Erreur chat: ${error.message}\n\nVérifie que Netlify Functions est accessible.`);
+  } finally {
+    if (textarea) {
+      textarea.disabled = false;
+      const submitBtn = form?.querySelector('input[type="image"]');
+      if (submitBtn) submitBtn.style.opacity = '1';
+      textarea.focus();
+    }
+
+    if (mobileTextarea) {
+      mobileTextarea.disabled = false;
+      const mobileSubmitBtn = mobileForm?.querySelector('button[type="submit"]');
+      if (mobileSubmitBtn) mobileSubmitBtn.disabled = false;
+      mobileTextarea.focus();
+    }
+  }
+}
+
+// Soumission question (Desktop)
+if (form) {
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const userMessage = textarea?.value.trim();
+    if (userMessage) await submitQuestion(userMessage);
+  });
+}
+
+// Soumission question (Mobile)
+if (mobileForm) {
+  mobileForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const userMessage = mobileTextarea?.value.trim();
+    if (userMessage) await submitQuestion(userMessage);
+  });
+}
+
+// Submit sur Enter (sans Shift) - Desktop
+if (textarea) {
+  textarea.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (form) form.dispatchEvent(new Event('submit'));
+    }
+  });
+}
+
+// Submit sur Enter (sans Shift) - Mobile
+if (mobileTextarea) {
+  mobileTextarea.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (mobileForm) mobileForm.dispatchEvent(new Event('submit'));
+    }
+  });
+}
+
+// Rendu historique (commune desktop/mobile)
+function renderHistory() {
+  const targetHistory = isMobile ? mobileHistory : history;
+  if (!targetHistory) return;
+
+  targetHistory.innerHTML = '';
+
+  for (const [userMsg, assistantMsg] of conversationHistory) {
+    // Message utilisateur
+    if (userMsg) {
+      const userDiv = document.createElement('div');
+      userDiv.className = 'message user-message';
+      userDiv.innerHTML = `<strong>Vous :</strong> ${escapeHtml(userMsg)}`;
+      targetHistory.appendChild(userDiv);
+    }
+
+    // Message assistant
+    if (assistantMsg) {
+      const assistantDiv = document.createElement('div');
+      assistantDiv.className = 'message assistant-message';
+
+      // Nettoyer métadonnées
+      let cleanMsg = assistantMsg.replace(/\*\[.*?\]\*/g, '').trim();
+
+      // Convertir markdown
+      cleanMsg = cleanMsg.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      cleanMsg = cleanMsg.replace(/\n/g, '<br>');
+
+      assistantDiv.innerHTML = `<strong>Spinoza :</strong> ${cleanMsg}`;
+      targetHistory.appendChild(assistantDiv);
+    }
+  }
+
+  // Scroll vers le bas
+  targetHistory.scrollTop = targetHistory.scrollHeight;
+
+  // Masquer le greeting mobile après premier message
+  if (isMobile && mobileGreeting && conversationHistory.length > 0) {
+    mobileGreeting.style.display = 'none';
+  }
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+console.log('💡 Clique sur Spinoza pour démarrer');
+console.log('⌨️  Enter pour envoyer, Shift+Enter pour nouvelle ligne');
+console.log('🚀 Mode: Netlify Function → HF Space');
+</script>
+
+</body>
+</html>
