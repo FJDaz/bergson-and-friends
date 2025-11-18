@@ -1,0 +1,246 @@
+/*FONTS-------------------*/
+@font-face {
+    font-family: 'Grotesque MT Std';
+    src: url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-Black.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-Black.woff') format('woff');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std Bold';
+    src: url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-Bold.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-Bold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std Bold Condensed';
+    src: url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-BoldExtended.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-BoldExtended.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std';
+    src: url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-Condensed.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-Condensed.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std';
+    src: url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-ExtraCond.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-ExtraCond.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std';
+    src: url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-Italic.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-Italic.woff') format('woff');
+    font-weight: normal;
+    font-style: italic;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std';
+    src: url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-Light.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-Light.woff') format('woff');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std';
+    src: url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-LightCond.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-LightCond.woff') format('woff');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std';
+    src: url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-LightItalic.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd-LightItalic.woff') format('woff');
+    font-weight: 300;
+    font-style: italic;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Grotesque MT Std';
+    src: url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/GrotesqueMTStd.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Letter Gothic Std';
+    src: url('https://fjdaz.com/bergson/statics/fonts/LetterGothicStd-Bold.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/LetterGothicStd-Bold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Letter Gothic Std';
+    src: url('https://fjdaz.com/bergson/statics/fonts/LetterGothicStd-BoldSlanted.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/LetterGothicStd-BoldSlanted.woff') format('woff');
+    font-weight: bold;
+    font-style: italic;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Letter Gothic Std';
+    src: url('https://fjdaz.com/bergson/statics/fonts/LetterGothicStd-Slanted.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/LetterGothicStd-Slanted.woff') format('woff');
+    font-weight: 500;
+    font-style: italic;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Letter Gothic Std';
+    src: url('https://fjdaz.com/bergson/statics/fonts/LetterGothicStd.woff2') format('woff2'), url('https://fjdaz.com/bergson/statics/fonts/LetterGothicStd.woff') format('woff');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+body {
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-family: 'Grotesque MT Std Bold', Gotham, "Helvetica Neue", Helvetica, Arial, "sans-serif"
+}
+button {
+    font-family: 'Grotesque MT Std', Gotham, "Helvetica Neue", Helvetica, Arial, "sans-serif"
+}
+header {
+    padding: 2rem 1rem;
+    width: 50%;
+    margin: auto;
+    border-bottom: solid 1px;
+}
+header h1 {
+    margin: 0;
+    font-weight: 700
+}
+main {
+    padding: 2rem 1rem;
+}
+/* Grille des philosophes */
+.philosophers {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+}
+.philosopher {
+    flex: 0 0 auto;
+    transition: transform 0.3s ease;
+}
+.philosopher#bergson, .philosopher.active#bergson {
+    transform-origin: 100% 0
+}
+.philosopher#kant, .philosopher#kant.active {
+    transform-origin: center 0
+}
+.philosopher#spinoza, .philosopher#spinoza.active {
+    transform-origin: 0 0
+}
+.philosopher.active {
+    transform: scale(1.5);
+    transform-origin: 100% 0
+}
+.philosopher.active img{
+    transform: scale(-1) !important
+}
+.philosopher-trigger {
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+}
+.philosopher-trigger img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: block;
+    margin: 0 auto 0.5rem;
+}
+.dialogue {
+    margin-top: 1rem;
+    text-align: left;
+	    width: 20em;
+    font-size: .8em;
+    font-family: 'Grotesque MT Std';
+}
+.qa-form textarea {
+    width: 100%;
+    min-height: 60px;
+    margin-bottom: 0.5rem;
+    border: none;
+    border-top: solid .2px;
+}
+.qa-history {
+    margin-top: 1rem;
+    padding-top: 1rem;
+}
+.qa {
+    margin-bottom: 0.5rem;
+}
+h2 span {
+    font-weight: 700;
+    display: inline;
+    visibility: visible;
+}
+input[type=image] {
+    width: 1em;
+    float: right;
+}
+textarea {
+    resize: none
+}
+/* Styling pour l'historique Q/A */
+.qa-history {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #fafafa;
+}
+
+.qa-pair {
+    margin-bottom: 20px;
+    padding: 15px;
+    border-left: 4px solid #333;
+    background-color: white;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.qa-pair:last-child {
+    margin-bottom: 0;
+}
+
+.question {
+    margin-bottom: 10px;
+    font-weight: normal;
+    color: #555;
+}
+
+.answer {
+    font-style: italic;
+    line-height: 1.6;
+    color: #333;
+}
+
+.question strong,
+.answer strong {
+    color: #000;
+    font-weight: bold;
+}
+
+/* Formulaire en bas */
+.qa-form {
+    position: sticky;
+    bottom: 0;
+    background-color: white;
+    padding: 15px;
+    border-top: 2px solid #eee;
+    border-radius: 0 0 8px 8px;
+}
+/* === RESPONSIVE MOBILE - DÉSACTIVÉ === */
+/* Les règles mobile sont maintenant dans responsive.css */

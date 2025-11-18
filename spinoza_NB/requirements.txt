@@ -1,0 +1,10 @@
+gradio
+torch
+transformers>=4.30.0
+sentence-transformers
+faiss-cpu
+bitsandbytes
+accelerate
+huggingface-hub
+peft>=0.10.0
+numpy

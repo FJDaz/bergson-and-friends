@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bergson and Friends</title>
+<link rel="stylesheet" href="https://fjdaz.com/bergson/statics/style.css">
+<link rel="stylesheet" href="https://fjdaz.com/bergson/statics/responsive.css" media="screen and (max-width: 768px)">
+</head>
+<body>
+  <div class="desktop-version">
+<header> <img src="https://fjdaz.com/bergson/statics/img/BergsonAndFriendsLOGO.png"> </header>
+<main>
+  <section class="philosophers"> 
+    
+    <!-- Philosophe 1 -->
+    <article class="philosopher" id="bergson">
+      <button class="philosopher-trigger">
+      <h2>Henri <span>Bergson</span></h2>
+      <img src="https://fjdaz.com/bergson/statics/img/Bergson.png" alt="Henri Bergson"> </button>
+      <div class="dialogue" hidden>
+        <div class="qa-history"></div>
+        <form class="qa-form">
+          <textarea id="question-bergson" name="question"></textarea>
+          <input type="image" src="https://fjdaz.com/bergson/statics/img/Submit.png" alt="envoyer">
+        </form>
+      </div>
+    </article>
+    
+    <!-- Philosophe 2 -->
+    <article class="philosopher" id="kant">
+      <button class="philosopher-trigger">
+      <h2>Immanuel <span>Kant</span></h2>
+      <img src="https://fjdaz.com/bergson/statics/img/Kant.png" alt="Immanuel Kant"> </button>
+      <div class="dialogue" hidden>
+        <div class="qa-history"></div>
+        <form class="qa-form">
+          <textarea id="question-kant" name="question"></textarea>
+          <input type="image" src="https://fjdaz.com/bergson/statics/img/Submit.png" alt="envoyer">
+        </form>
+      </div>
+    </article>
+    
+    <!-- Philosophe 3 -->
+    <article class="philosopher" id="spinoza">
+      <button class="philosopher-trigger">
+      <h2>Baruch <span>Spinoza</span></h2>
+      <img src="https://fjdaz.com/bergson/statics/img/Spinoza.png" alt="Baruch Spinoza"> </button>
+      <div class="dialogue" hidden>
+        <div class="qa-history"></div>
+        <form class="qa-form">
+          <textarea id="question-spinoza" name="question"></textarea>
+          <input type="image" src="https://fjdaz.com/bergson/statics/img/Submit.png" alt="envoyer">
+        </form>
+      </div>
+    </article>
+  </section>
+</main>
+</div>
+
+<!-- VERSION MOBILE DÉDIÉE - À ajouter après la version desktop -->
+
+<div class="mobile-version" style="display: none;">
+  <header>
+    <img src="https://fjdaz.com/bergson/statics/img/BergsonAndFriendsLOGO.png" alt="Bergson and Friends">
+  </header>
+  
+  <main>
+    <!-- Philosophe actif par défaut : aucun -->
+    <section class="mobile-philosophers">
+      
+      <!-- Bergson -->
+      <article class="mobile-philosopher" id="mobile-bergson" data-philosopher="bergson">
+        <button class="mobile-philosopher-trigger">
+          <img src="https://fjdaz.com/bergson/statics/img/Bergson.png" alt="Henri Bergson">
+          <span>Henri Bergson</span>
+        </button>
+      </article>
+      
+      <!-- Kant -->
+      <article class="mobile-philosopher" id="mobile-kant" data-philosopher="kant">
+        <button class="mobile-philosopher-trigger">
+          <img src="https://fjdaz.com/bergson/statics/img/Kant.png" alt="Immanuel Kant">
+          <span>Immanuel Kant</span>
+        </button>
+      </article>
+      
+      <!-- Spinoza -->
+      <article class="mobile-philosopher" id="mobile-spinoza" data-philosopher="spinoza">
+        <button class="mobile-philosopher-trigger">
+          <img src="https://fjdaz.com/bergson/statics/img/Spinoza.png" alt="Baruch Spinoza">
+          <span>Baruch Spinoza</span>
+        </button>
+      </article>
+      
+    </section>
+    
+    <!-- Zone conversation mobile - apparaît quand un philosophe est sélectionné -->
+    <section class="mobile-conversation" id="mobile-conversation" style="display: none;">
+      
+      <!-- Philosophe actif en haut -->
+      <div class="mobile-active-philosopher">
+        <img id="mobile-active-img" src="" alt="">
+        <h2 id="mobile-active-name"></h2>
+      </div>
+      
+      <!-- Contenu principal : philosophes à gauche + conversation à droite -->
+      <div class="mobile-conversation-content">
+        
+        <!-- Philosophes vacants à gauche -->
+        <div class="mobile-philosophers">
+          <article class="mobile-philosopher" id="mobile-kant-vacant" data-philosopher="kant">
+            <button class="mobile-philosopher-trigger">
+              <img src="https://fjdaz.com/bergson/statics/img/Kant.png" alt="Immanuel Kant">
+              <span>Kant</span>
+            </button>
+          </article>
+          
+          <article class="mobile-philosopher" id="mobile-spinoza-vacant" data-philosopher="spinoza">
+            <button class="mobile-philosopher-trigger">
+              <img src="https://fjdaz.com/bergson/statics/img/Spinoza.png" alt="Baruch Spinoza">
+              <span>Spinoza</span>
+            </button>
+          </article>
+        </div>
+        
+        <!-- Zone conversation à droite -->
+        <div class="mobile-conversation-right">
+          <!-- Greeting initial -->
+          <div class="mobile-greeting">Bonjour, cher ami. De quel problème désirez-vous que nous nous entretenions ?</div>
+          
+          <!-- Historique Q/A -->
+          <div class="mobile-qa-history" id="mobile-qa-history">
+            <!-- Les Q/A apparaîtront ici dynamiquement -->
+          </div>
+          
+          <!-- Formulaire -->
+          <form class="mobile-qa-form" id="mobile-qa-form">
+            <textarea placeholder="Posez votre question..." rows="3"></textarea>
+            <button type="submit">Envoyer</button>
+          </form>
+        </div>
+        
+      </div>
+      
+    </section>
+  </main>
+</div>
+
+<script src="https://fjdaz.com/bergson/statics/app.js"></script>
+
+<script>
+  // Fix définitif pour tous les philosophes
+  document.addEventListener('DOMContentLoaded', function() {
+      // Questions bac pour Spinoza (même liste que dans app.py)
+      const questionsBacSpinoza = [
+          "La liberté est-elle une illusion ?",
+          "Suis-je esclave de mes désirs ?",
+          "Puis-je maîtriser mes émotions ?",
+          "La joie procure-t-elle un pouvoir ?",
+          "Peut-on désirer sans souffrir ?",
+          "Sommes-nous responsables de nos actes ?",
+          "La raison suffit-elle à nous guider ?",
+          "Peut-on vivre sans passions ?",
+          "Qu'est-ce que la vérité ?",
+          "Que puis-je savoir du monde ?",
+          "Dieu et Nature sont-ils identiques ?",
+          "Pourquoi souffrons-nous ?",
+          "La connaissance rend-elle libre ?",
+          "Peut-on être heureux sans être libre ?",
+          "L'homme est-il naturellement social ?"
+      ];
+
+      // Stockage historique par philosophe (SYSTÈME ADAPTATIF)
+      const conversationHistories = {
+          bergson: [],
+          kant: [],
+          spinoza: []
+      };
+
+      // Initialiser Spinoza avec une question amorce
+      const spinozaHistory = document.querySelector('#spinoza .qa-history');
+      if (spinozaHistory) {
+          const questionAmorce = questionsBacSpinoza[Math.floor(Math.random() * questionsBacSpinoza.length)];
+          const greeting = `Bonjour ! Je suis Spinoza. Discutons ensemble de cette question :\n\n${questionAmorce}\n\nQu'en penses-tu ?`;
+
+          spinozaHistory.innerHTML = `
+              <div style="margin: 10px 0; padding: 10px; border-left: 3px solid #4a90e2;">
+                  <div><strong>Spinoza :</strong> ${greeting.replace(/\n/g, '<br>')}</div>
+              </div>
+          `;
+
+          // Ajouter le greeting à l'historique
+          conversationHistories.spinoza.push([null, greeting]);
+      }
+
+      // Gestion des questions/réponses
+      document.querySelectorAll('input[type="image"]').forEach(btn => {
+          btn.addEventListener('click', function(e) {
+              e.preventDefault();
+
+              const form = this.closest('form');
+              const textarea = form.querySelector('textarea');
+              const question = textarea.value.trim();
+
+              if (!question) return;
+
+              const philosopherId = form.closest('.philosopher').id;
+              console.log(`Question pour ${philosopherId}:`, question);
+
+              // Construire payload avec historique (SYSTÈME ADAPTATIF)
+              const payload = {
+                  question: question,
+                  history: conversationHistories[philosopherId] || []
+              };
+
+              fetch(`/.netlify/functions/${philosopherId}`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload)
+              })
+              .then(r => r.json())
+              .then(data => {
+                  const answer = data.answer;
+
+                  // Ajouter à l'historique conversationnel
+                  conversationHistories[philosopherId].push([question, answer]);
+
+                  // Afficher dans le DOM
+                  const history = form.parentElement.querySelector('.qa-history');
+                  history.innerHTML += `
+                      <div style="margin: 10px 0; padding: 10px; border-left: 3px solid #ccc;">
+                          <div><strong>Q:</strong> ${question}</div>
+                          <div><strong>R:</strong> ${answer}</div>
+                      </div>
+                  `;
+                  textarea.value = '';
+
+                  // Scroll vers le bas
+                  history.scrollTop = history.scrollHeight;
+              })
+              .catch(err => {
+                  console.error('Erreur:', err);
+                  alert('Erreur de connexion. Réessaie dans quelques instants.');
+              });
+          });
+      });
+  });
+</script>
+
+</body>
+</html>

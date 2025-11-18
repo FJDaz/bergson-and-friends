@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Bergson Function</title>
+</head>
+<body>
+    <h1>Test Fonction Bergson</h1>
+    <textarea id="question" placeholder="Posez une question à Bergson...">Qu'est-ce que la durée ?</textarea><br>
+    <button onclick="testBergson()">Tester</button>
+    <div id="result"></div>
+
+    <script>
+        async function testBergson() {
+            const question = document.getElementById('question').value;
+            const result = document.getElementById('result');
+            
+            try {
+                const response = await fetch('/.netlify/functions/bergson', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: question })
+                });
+                
+                const data = await response.json();
+                result.innerHTML = '<h3>Réponse:</h3><p>' + data.answer + '</p>';
+            } catch (error) {
+                result.innerHTML = 'Erreur: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
