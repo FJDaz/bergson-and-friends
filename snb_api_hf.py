@@ -11,14 +11,22 @@ from typing import List, Dict, Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import httpx
+from gradio_client import Client
 
 # Import RAG system
 from rag_system import extract_concepts, rag_lookup, format_rag_context
 
 # Configuration
+HF_SPACE_NAME = "FJDaz/bergsonAndFriends"
 HF_SPACE_URL = "https://fjdaz-bergsonandfriends.hf.space"
-HF_API_ENDPOINT = f"{HF_SPACE_URL}/api/predict"
+
+# Initialize Gradio client
+try:
+    gradio_client = Client(HF_SPACE_NAME)
+    print(f"✅ Gradio client connected to {HF_SPACE_NAME}")
+except Exception as e:
+    print(f"⚠️ Gradio client failed: {e}")
+    gradio_client = None
 
 app = FastAPI(title="SNB API - HF Space Bridge")
 
@@ -71,19 +79,14 @@ async def root():
 
 @app.get("/health")
 async def health():
-    # Test si HF Space répond
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(HF_SPACE_URL)
-            space_status = "online" if response.status_code == 200 else "paused"
-    except:
-        space_status = "unreachable"
+    space_status = "connected" if gradio_client else "disconnected"
 
     return {
         "status": "ok",
         "mode": "hf_space",
+        "space_name": HF_SPACE_NAME,
         "space_url": HF_SPACE_URL,
-        "space_status": space_status
+        "gradio_client": space_status
     }
 
 def detecter_contexte(message: str) -> str:
@@ -99,43 +102,42 @@ def detecter_contexte(message: str) -> str:
     else:
         return "neutre"
 
-async def call_hf_space(message: str, history: List[List]) -> str:
+def call_hf_space(message: str, history: List[List]) -> str:
     """Appelle le Space HF Gradio pour génération"""
 
-    # Convertir histoire au format Gradio
-    gradio_history = [[h[0], h[1]] for h in history if h[0] and h[1]]
+    if not gradio_client:
+        raise HTTPException(
+            status_code=503,
+            detail="Gradio client non connecté - le Space est peut-être en pause"
+        )
 
-    payload = {
-        "data": [message, gradio_history]
-    }
+    try:
+        # Convertir histoire au format Gradio
+        # Format: [[user_msg, assistant_msg], ...] ou [[None, greeting]]
+        gradio_history = [[h[0], h[1]] for h in history if h[0] or h[1]]
 
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        try:
-            response = await client.post(
-                HF_API_ENDPOINT,
-                json=payload,
-                headers={"Content-Type": "application/json"}
-            )
+        # Appel Gradio client
+        result = gradio_client.predict(
+            message=message,
+            history=gradio_history,
+            api_name="//chat_function"
+        )
 
-            if response.status_code == 200:
-                data = response.json()
-                # Gradio renvoie {"data": [result]}
-                return data["data"][0]
-            else:
-                raise HTTPException(
-                    status_code=response.status_code,
-                    detail=f"HF Space error: {response.text}"
-                )
-        except httpx.TimeoutException:
-            raise HTTPException(
-                status_code=504,
-                detail="HF Space timeout - le Space est peut-être en pause"
-            )
-        except Exception as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Erreur appel HF Space: {str(e)}"
-            )
+        # Result format: [textbox_value, updated_history]
+        # On veut juste la dernière réponse de l'historique
+        updated_history = result[1]  # [[user, assistant], ...]
+
+        if updated_history and len(updated_history) > 0:
+            last_response = updated_history[-1][1]  # Dernière réponse assistant
+            return last_response
+        else:
+            raise HTTPException(status_code=500, detail="Pas de réponse du modèle")
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur appel HF Space: {str(e)}"
+        )
 
 @app.post("/init/{philosopher}", response_model=InitResponse)
 async def init_philosopher(philosopher: str):
@@ -170,7 +172,7 @@ async def chat(philosopher: str, request: ChatRequest):
 
     # Appeler HF Space
     try:
-        response = await call_hf_space(enriched_message, request.history or [])
+        response = call_hf_space(enriched_message, request.history or [])
     except HTTPException as e:
         # Fallback sur mock si HF Space inaccessible
         print(f"[WARN] HF Space inaccessible, fallback mock: {e.detail}")
