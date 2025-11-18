@@ -7,7 +7,7 @@ Appelle le Space bergsonAndFriends pour Spinoza
 import os
 import random
 import re
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -53,12 +53,12 @@ QUESTIONS_BAC = {
 # Models
 class ChatRequest(BaseModel):
     message: str
-    history: Optional[List[List[Optional[str], Optional[str]]]] = None
+    history: Optional[List[List[Any]]] = None
     philosopher: str = "spinoza"
 
 class ChatResponse(BaseModel):
     reply: str
-    history: List[List[Optional[str], Optional[str]]]
+    history: List[List[Any]]
     contexte: str
     rag_passages: List[Dict]
 
@@ -66,7 +66,7 @@ class InitResponse(BaseModel):
     philosopher: str
     question: str
     greeting: str
-    history: List[List[Optional[str], Optional[str]]]
+    history: List[List[Any]]
 
 @app.get("/")
 async def root():
