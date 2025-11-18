@@ -1,0 +1,79 @@
+ 
+[Region: us-east4]
+[Region: us-east4]
+[Region: us-east4]
+[Region: us-east4]
+ 
+╭─────────────────╮
+│ Railpack 0.13.0 │
+╰─────────────────╯
+ 
+↳ Detected Python
+↳ Using pip
+↳ Found web command in Procfile
+✖ Failed to run mise command '/tmp/railpack/mise/mise-2025.11.6 latest python@3.11.9': exit status 1
+ 
+ 
+mise WARN  failed to update python-build repo (change with `fetch_remote_versions_timeout` or env `MISE_FETCH_REMOTE_VERSIONS_TIMEOUT`), attempting self-repair by recloning
+mise ERROR An IO error occurred when talking to the server
+mise ERROR error sending request for url (https://github.com/pyenv/pyenv.git/info/refs?service=git-upload-pack)
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information
+ 
+ 
+ 
+ 
+[Region: us-east4]
+ 
+╭─────────────────╮
+│ Railpack 0.13.0 │
+╰─────────────────╯
+ 
+↳ Detected Python
+↳ Using pip
+↳ Found web command in Procfile
+✖ Failed to run mise command '/tmp/railpack/mise/mise-2025.11.6 latest python@3.11.9': exit status 1
+ 
+ 
+mise ERROR An IO error occurred when talking to the server
+mise ERROR error sending request for url (https://github.com/pyenv/pyenv.git/info/refs?service=git-upload-pack)
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information
+ 
+ 
+ 
+ 
+ 
+[Region: us-east4]
+ 
+╭─────────────────╮
+│ Railpack 0.13.0 │
+╰─────────────────╯
+ 
+↳ Detected Python
+↳ Using pip
+↳ Found web command in Procfile
+✖ Failed to run mise command '/tmp/railpack/mise/mise-2025.11.6 latest python@3.11.9': exit status 1
+ 
+ 
+mise ERROR An IO error occurred when talking to the server
+mise ERROR error sending request for url (https://github.com/pyenv/pyenv.git/info/refs?service=git-upload-pack)
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information
+ 
+ 
+ 
+ 
+[Region: us-east4]
+[Region: us-east4]
+ 
+╭─────────────────╮
+│ Railpack 0.13.0 │
+╰─────────────────╯
+ 
+↳ Detected Python
+↳ Using pip
+↳ Found web command in Procfile
+✖ Failed to run mise command '/tmp/railpack/mise/mise-2025.11.6 latest python@3.11.9': exit status 1
+ 
+ 
+mise ERROR An IO error occurred when talking to the server
+mise ERROR error sending request for url (https://github.com/pyenv/pyenv.git/info/refs?service=git-upload-pack)
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information

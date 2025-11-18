@@ -311,6 +311,18 @@ Le **résumé de contexte** est un skill automatique qui maintient un fichier de
 
 ## 🏗️ Architecture de Documentation Systématique
 
+### ⚠️ RÈGLE ABSOLUE - Dossier Garbage
+
+**Le dossier `garbage/` ne doit JAMAIS être commité/pushé.**
+
+- **Raison :** Contient fichiers obsolètes, tests, expérimentations
+- **Action :** Toujours vérifier avant commit que `garbage/` n'est pas inclus
+- **Vérification :** `git status | grep garbage` doit retourner vide
+- **Si présent :** `git reset HEAD garbage/` puis ajouter à `.gitignore`
+- **Statut :** Déjà dans `.gitignore` mais règle à respecter absolument
+
+---
+
 ### Structure Catégorisée
 
 La documentation suit une architecture standardisée avec catégories claires :
@@ -324,7 +336,8 @@ docs/
 ├── analyses/           # Analyses détaillées, bilans
 ├── tests/              # Documentation des tests
 │   └── archives/       # Archives automatiques
-└── supports/           # Support technique
+├── supports/           # Support technique
+└── logs/               # Logs et traces d'exécution
 ```
 
 ### Catégories et Usage
@@ -364,6 +377,11 @@ docs/
 - **Exemples** : `fix-ssl.md`, `fix-500.md`
 - **Convention** : Préfixe `fix-` pour corrections
 
+#### `logs/` - Logs et Traces
+- **Contenu** : Logs d'exécution, traces de services, logs d'erreurs
+- **Exemples** : `Railway_logs`, `netlify-logs.txt`, `hf-space-errors.log`
+- **Convention** : Noms descriptifs avec service/source (`railway-logs.txt`, `netlify-errors.log`)
+
 ### Archivage Automatique
 
 **Skill** : `archive-docs-manager`
@@ -377,6 +395,36 @@ docs/
 **Invocation** :
 - Automatique : **Cursor** invoque après archivage de docs
 - Manuel : `python tools/archive_old_docs.py [jours]`
+
+### Règles de Git - Fichiers à Ne JAMAIS Push
+
+**⚠️ RÈGLE ABSOLUE :** Certains dossiers/fichiers ne doivent **JAMAIS** être commités/pushés :
+
+1. **`garbage/`** → **JAMAIS push**
+   - Dossier pour fichiers obsolètes, tests, expérimentations
+   - Toujours dans `.gitignore`
+   - **Action :** Vérifier avant chaque commit que `garbage/` n'est pas inclus
+
+2. **Fichiers temporaires**
+   - `*.tmp`, `*.temp`, `*.bak`, `*.backup`
+   - Fichiers de test : `*_test.html`, `*_local.js`, `*_debug.*`
+   - Logs : `*.log` (sauf `docs/logs/*.log`)
+
+3. **Environnements**
+   - `.venv/`, `node_modules/`, `.netlify/`
+   - Fichiers de cache, builds
+
+**Vérification avant commit :**
+```bash
+# Vérifier que garbage/ n'est pas dans le commit
+git status | grep garbage
+
+# Si présent, l'ajouter à .gitignore et retirer du staging
+git reset HEAD garbage/
+echo "garbage/" >> .gitignore
+```
+
+---
 
 ### Conventions de Nommage
 

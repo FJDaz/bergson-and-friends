@@ -34,6 +34,55 @@
 </main>
 </div>
 
+<!-- VERSION MOBILE DÉDIÉE -->
+<div class="mobile-version" style="display: none;">
+  <header>
+    <img src="https://fjdaz.com/bergson/statics/img/BergsonAndFriendsLOGO.png" alt="Bergson and Friends">
+  </header>
+  
+  <main>
+    <!-- Spinoza - Version mobile -->
+    <section class="mobile-philosophers">
+      <article class="mobile-philosopher" id="mobile-spinoza" data-philosopher="spinoza">
+        <button class="mobile-philosopher-trigger">
+          <img src="https://fjdaz.com/bergson/statics/img/Spinoza.png" alt="Baruch Spinoza">
+          <span>Baruch Spinoza</span>
+        </button>
+      </article>
+    </section>
+    
+    <!-- Zone conversation mobile - apparaît quand Spinoza est sélectionné -->
+    <section class="mobile-conversation" id="mobile-conversation" style="display: none;">
+      
+      <!-- Spinoza actif en haut -->
+      <div class="mobile-active-philosopher">
+        <img id="mobile-active-img" src="https://fjdaz.com/bergson/statics/img/Spinoza.png" alt="Baruch Spinoza">
+        <h2 id="mobile-active-name">Baruch Spinoza</h2>
+      </div>
+      
+      <!-- Zone conversation -->
+      <div class="mobile-conversation-content">
+        <div class="mobile-conversation-right">
+          <!-- Greeting initial -->
+          <div class="mobile-greeting" id="mobile-greeting">Bonjour, cher ami. De quel problème désirez-vous que nous nous entretenions ?</div>
+          
+          <!-- Historique Q/A -->
+          <div class="mobile-qa-history" id="mobile-qa-history">
+            <!-- Les Q/A apparaîtront ici dynamiquement -->
+          </div>
+          
+          <!-- Formulaire -->
+          <form class="mobile-qa-form" id="mobile-qa-form">
+            <textarea id="mobile-question-spinoza" placeholder="Posez votre question à Spinoza..." rows="3"></textarea>
+            <button type="submit">Envoyer</button>
+          </form>
+        </div>
+      </div>
+      
+    </section>
+  </main>
+</div>
+
 <script>
 // Configuration API Railway
 const API_BASE_URL = 'https://bergson-api-production.up.railway.app';
@@ -41,60 +90,136 @@ const API_BASE_URL = 'https://bergson-api-production.up.railway.app';
 // État conversation
 let conversationHistory = [];
 
-// Éléments DOM
-const article = document.getElementById('spinoza');
-const trigger = article.querySelector('.philosopher-trigger');
-const dialogue = article.querySelector('.dialogue');
-const form = article.querySelector('.qa-form');
-const textarea = article.querySelector('textarea');
-const history = article.querySelector('.qa-history');
+// Détection mobile/desktop
+const isMobile = window.innerWidth <= 768;
+const desktopVersion = document.querySelector('.desktop-version');
+const mobileVersion = document.querySelector('.mobile-version');
 
-console.log('✅ Spinoza interface chargée');
-console.log('📡 Backend:', API_BASE_URL);
+// Afficher la bonne version
+if (isMobile) {
+  desktopVersion.style.display = 'none';
+  mobileVersion.style.display = 'block';
+} else {
+  desktopVersion.style.display = 'block';
+  mobileVersion.style.display = 'none';
+}
 
-// Clic sur Spinoza
-trigger.addEventListener('click', async () => {
-  console.log('🖱️ Clic sur Spinoza détecté');
-  dialogue.hidden = !dialogue.hidden;
-
-  // Init conversation si première ouverture
-  if (!conversationHistory.length && !dialogue.hidden) {
-    console.log('[INIT] Appel /init/spinoza...');
-    try {
-      const response = await fetch(`${API_BASE_URL}/init/spinoza`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-      const data = await response.json();
-      console.log('[INIT] ✅ Reçu:', data);
-
-      conversationHistory = data.history;
-      renderHistory();
-      textarea.focus();
-
-    } catch (error) {
-      console.error('[INIT] ❌ Erreur:', error);
-      alert(`Erreur init Spinoza: ${error.message}\n\nVérifie que le backend est accessible.`);
-    }
+// Gérer le resize
+window.addEventListener('resize', () => {
+  const nowMobile = window.innerWidth <= 768;
+  if (nowMobile !== isMobile) {
+    location.reload(); // Recharger si changement de mode
   }
 });
 
-// Soumission question
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
+// Éléments DOM Desktop
+const article = document.getElementById('spinoza');
+const trigger = article?.querySelector('.philosopher-trigger');
+const dialogue = article?.querySelector('.dialogue');
+const form = article?.querySelector('.qa-form');
+const textarea = article?.querySelector('textarea');
+const history = article?.querySelector('.qa-history');
 
-  const userMessage = textarea.value.trim();
-  if (!userMessage) return;
+// Éléments DOM Mobile
+const mobileTrigger = document.getElementById('mobile-spinoza')?.querySelector('.mobile-philosopher-trigger');
+const mobileConversation = document.getElementById('mobile-conversation');
+const mobileForm = document.getElementById('mobile-qa-form');
+const mobileTextarea = document.getElementById('mobile-question-spinoza');
+const mobileHistory = document.getElementById('mobile-qa-history');
+const mobileGreeting = document.getElementById('mobile-greeting');
+
+console.log('✅ Spinoza interface chargée');
+console.log('📡 Backend:', API_BASE_URL);
+console.log('📱 Mode:', isMobile ? 'Mobile' : 'Desktop');
+
+// Fonction d'initialisation
+async function initConversation() {
+  if (conversationHistory.length) return; // Déjà initialisé
+
+  console.log('[INIT] Appel /init/spinoza...');
+  try {
+    const response = await fetch(`${API_BASE_URL}/init/spinoza`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const data = await response.json();
+    console.log('[INIT] ✅ Reçu:', data);
+
+    conversationHistory = data.history;
+    
+    // Mettre à jour le greeting mobile
+    if (isMobile && mobileGreeting && data.greeting) {
+      mobileGreeting.textContent = data.greeting;
+    }
+    
+    renderHistory();
+    
+    if (isMobile && mobileTextarea) {
+      mobileTextarea.focus();
+    } else if (textarea) {
+      textarea.focus();
+    }
+
+  } catch (error) {
+    console.error('[INIT] ❌ Erreur:', error);
+    alert(`Erreur init Spinoza: ${error.message}\n\nVérifie que le backend est accessible.`);
+  }
+}
+
+// Clic sur Spinoza (Desktop)
+if (trigger) {
+  trigger.addEventListener('click', async () => {
+    console.log('🖱️ Clic sur Spinoza détecté (Desktop)');
+    dialogue.hidden = !dialogue.hidden;
+
+    // Init conversation si première ouverture
+    if (!conversationHistory.length && !dialogue.hidden) {
+      await initConversation();
+    }
+  });
+}
+
+// Clic sur Spinoza (Mobile)
+if (mobileTrigger) {
+  mobileTrigger.addEventListener('click', async () => {
+    console.log('🖱️ Clic sur Spinoza détecté (Mobile)');
+    
+    // Afficher la conversation
+    if (mobileConversation) {
+      mobileConversation.style.display = 'block';
+      
+      // Masquer la sélection de philosophe
+      document.querySelector('.mobile-philosophers')?.style.setProperty('display', 'none');
+      
+      // Init conversation si première ouverture
+      if (!conversationHistory.length) {
+        await initConversation();
+      }
+    }
+  });
+}
+
+// Fonction de soumission (commune desktop/mobile)
+async function submitQuestion(userMessage) {
+  if (!userMessage.trim()) return;
 
   console.log('[CHAT] Message:', userMessage);
 
   // Désactiver pendant traitement
-  textarea.disabled = true;
-  const submitBtn = form.querySelector('input[type="image"]');
-  submitBtn.style.opacity = '0.5';
+  if (textarea) {
+    textarea.disabled = true;
+    const submitBtn = form?.querySelector('input[type="image"]');
+    if (submitBtn) submitBtn.style.opacity = '0.5';
+  }
+  
+  if (mobileTextarea) {
+    mobileTextarea.disabled = true;
+    const mobileSubmitBtn = mobileForm?.querySelector('button[type="submit"]');
+    if (mobileSubmitBtn) mobileSubmitBtn.disabled = true;
+  }
 
   try {
     const response = await fetch(`${API_BASE_URL}/chat/spinoza`, {
@@ -122,29 +247,73 @@ form.addEventListener('submit', async (e) => {
     renderHistory();
 
     // Réinitialiser textarea
-    textarea.value = '';
+    if (textarea) textarea.value = '';
+    if (mobileTextarea) mobileTextarea.value = '';
 
   } catch (error) {
     console.error('[CHAT] ❌ Erreur:', error);
     alert(`Erreur chat: ${error.message}\n\nVérifie que le backend est accessible.`);
   } finally {
-    textarea.disabled = false;
-    submitBtn.style.opacity = '1';
-    textarea.focus();
+    if (textarea) {
+      textarea.disabled = false;
+      const submitBtn = form?.querySelector('input[type="image"]');
+      if (submitBtn) submitBtn.style.opacity = '1';
+      textarea.focus();
+    }
+    
+    if (mobileTextarea) {
+      mobileTextarea.disabled = false;
+      const mobileSubmitBtn = mobileForm?.querySelector('button[type="submit"]');
+      if (mobileSubmitBtn) mobileSubmitBtn.disabled = false;
+      mobileTextarea.focus();
+    }
   }
-});
+}
 
-// Submit sur Enter (sans Shift)
-textarea.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
+// Soumission question (Desktop)
+if (form) {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    form.dispatchEvent(new Event('submit'));
-  }
-});
+    const userMessage = textarea?.value.trim();
+    if (userMessage) await submitQuestion(userMessage);
+  });
+}
 
-// Rendu historique
+// Soumission question (Mobile)
+if (mobileForm) {
+  mobileForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const userMessage = mobileTextarea?.value.trim();
+    if (userMessage) await submitQuestion(userMessage);
+  });
+}
+
+// Submit sur Enter (sans Shift) - Desktop
+if (textarea) {
+  textarea.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (form) form.dispatchEvent(new Event('submit'));
+    }
+  });
+}
+
+// Submit sur Enter (sans Shift) - Mobile
+if (mobileTextarea) {
+  mobileTextarea.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (mobileForm) mobileForm.dispatchEvent(new Event('submit'));
+    }
+  });
+}
+
+// Rendu historique (commune desktop/mobile)
 function renderHistory() {
-  history.innerHTML = '';
+  const targetHistory = isMobile ? mobileHistory : history;
+  if (!targetHistory) return;
+
+  targetHistory.innerHTML = '';
 
   for (const [userMsg, assistantMsg] of conversationHistory) {
     // Message utilisateur
@@ -152,7 +321,7 @@ function renderHistory() {
       const userDiv = document.createElement('div');
       userDiv.className = 'message user-message';
       userDiv.innerHTML = `<strong>Vous :</strong> ${escapeHtml(userMsg)}`;
-      history.appendChild(userDiv);
+      targetHistory.appendChild(userDiv);
     }
 
     // Message assistant
@@ -168,12 +337,17 @@ function renderHistory() {
       cleanMsg = cleanMsg.replace(/\n/g, '<br>');
 
       assistantDiv.innerHTML = `<strong>Spinoza :</strong> ${cleanMsg}`;
-      history.appendChild(assistantDiv);
+      targetHistory.appendChild(assistantDiv);
     }
   }
 
   // Scroll vers le bas
-  history.scrollTop = history.scrollHeight;
+  targetHistory.scrollTop = targetHistory.scrollHeight;
+  
+  // Masquer le greeting mobile après premier message
+  if (isMobile && mobileGreeting && conversationHistory.length > 0) {
+    mobileGreeting.style.display = 'none';
+  }
 }
 
 function escapeHtml(text) {

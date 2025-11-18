@@ -11,7 +11,8 @@ docs/
 ├── analyses/          # Analyses détaillées, bilans
 ├── tests/             # Documentation des tests
 │   └── archives/      # Archives automatiques
-└── supports/         # Support technique
+├── supports/         # Support technique
+└── logs/             # Logs et traces d'exécution
 ```
 
 ## 📁 Contenu par Catégorie
@@ -66,6 +67,12 @@ Support technique :
 - **verification-app-js.md** : Vérification app.js
 - **urgent-upload-app-js-v2.md** : Urgent - Upload app.js v2
 - **urgent-upload-index-html.md** : Urgent - Upload index.html
+
+### `docs/logs/`
+Logs et traces d'exécution :
+- **Railway_logs** : Logs du service Railway
+- Logs de services (Netlify, HF Spaces, etc.)
+- Traces d'erreurs et d'exécution
 
 ## 🔄 Archivage Automatique
 
