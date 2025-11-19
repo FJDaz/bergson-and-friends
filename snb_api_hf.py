@@ -20,13 +20,37 @@ from rag_system import extract_concepts, rag_lookup, format_rag_context
 HF_SPACE_NAME = "FJDaz/bergsonAndFriends"
 HF_SPACE_URL = "https://fjdaz-bergsonandfriends.hf.space"
 
-# Initialize Gradio client
-try:
-    gradio_client = Client(HF_SPACE_NAME)
-    print(f"✅ Gradio client connected to {HF_SPACE_NAME}")
-except Exception as e:
-    print(f"⚠️ Gradio client failed: {e}")
-    gradio_client = None
+# Gradio client avec lazy initialization
+gradio_client = None
+last_connection_attempt = None
+CONNECTION_RETRY_DELAY = 60  # Retry connection after 60 seconds
+
+def get_gradio_client():
+    """Get Gradio client avec lazy initialization et retry logic"""
+    global gradio_client, last_connection_attempt
+
+    import time
+
+    # Si déjà connecté, retourner le client
+    if gradio_client is not None:
+        return gradio_client
+
+    # Si tentative récente échouée, attendre avant retry
+    if last_connection_attempt is not None:
+        if time.time() - last_connection_attempt < CONNECTION_RETRY_DELAY:
+            return None
+
+    # Tentative de connexion
+    try:
+        print(f"[GRADIO] Tentative connexion à {HF_SPACE_NAME}...")
+        gradio_client = Client(HF_SPACE_NAME)
+        print(f"✅ Gradio client connecté à {HF_SPACE_NAME}")
+        last_connection_attempt = None
+        return gradio_client
+    except Exception as e:
+        print(f"⚠️ Connexion Gradio échouée: {e}")
+        last_connection_attempt = time.time()
+        return None
 
 app = FastAPI(title="SNB API - HF Space Bridge")
 
@@ -79,7 +103,9 @@ async def root():
 
 @app.get("/health")
 async def health():
-    space_status = "connected" if gradio_client else "disconnected"
+    # Essayer de se connecter si pas encore fait
+    client = get_gradio_client()
+    space_status = "connected" if client is not None else "disconnected"
 
     return {
         "status": "ok",
@@ -105,10 +131,13 @@ def detecter_contexte(message: str) -> str:
 def call_hf_space(message: str, history: List[List]) -> str:
     """Appelle le Space HF Gradio pour génération"""
 
-    if not gradio_client:
+    # Obtenir le client (avec retry automatique)
+    client = get_gradio_client()
+
+    if not client:
         raise HTTPException(
             status_code=503,
-            detail="Gradio client non connecté - le Space est peut-être en pause"
+            detail="Gradio client non connecté - le Space est peut-être en pause ou en train de démarrer"
         )
 
     try:
@@ -117,7 +146,7 @@ def call_hf_space(message: str, history: List[List]) -> str:
         gradio_history = [[h[0], h[1]] for h in history if h[0] or h[1]]
 
         # Appel Gradio client
-        result = gradio_client.predict(
+        result = client.predict(
             message=message,
             history=gradio_history,
             api_name="//chat_function"
