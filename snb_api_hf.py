@@ -7,11 +7,11 @@ Appelle le Space bergsonAndFriends pour Spinoza
 import os
 import random
 import re
+import httpx
 from typing import List, Dict, Optional, Any
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from gradio_client import Client
 
 # Import RAG system
 from rag_system import extract_concepts, rag_lookup, format_rag_context
@@ -19,38 +19,74 @@ from rag_system import extract_concepts, rag_lookup, format_rag_context
 # Configuration
 HF_SPACE_NAME = "FJDaz/bergsonAndFriends"
 HF_SPACE_URL = "https://fjdaz-bergsonandfriends.hf.space"
+HF_SPACE_API = f"{HF_SPACE_URL}/call"
 
-# Gradio client avec lazy initialization
-gradio_client = None
-last_connection_attempt = None
-CONNECTION_RETRY_DELAY = 60  # Retry connection after 60 seconds
+# HTTP client pour appels directs
+http_client = httpx.Client(timeout=60.0)
 
-def get_gradio_client():
-    """Get Gradio client avec lazy initialization et retry logic"""
-    global gradio_client, last_connection_attempt
-
-    import time
-
-    # Si déjà connecté, retourner le client
-    if gradio_client is not None:
-        return gradio_client
-
-    # Si tentative récente échouée, attendre avant retry
-    if last_connection_attempt is not None:
-        if time.time() - last_connection_attempt < CONNECTION_RETRY_DELAY:
-            return None
-
-    # Tentative de connexion
+async def call_gradio_api(message: str, history: List[List]) -> str:
+    """
+    Appel direct à l'API Gradio via HTTP (bypass gradio_client)
+    Utilise le endpoint /call/chat_function
+    """
     try:
-        print(f"[GRADIO] Tentative connexion à {HF_SPACE_NAME}...")
-        gradio_client = Client(HF_SPACE_NAME)
-        print(f"✅ Gradio client connecté à {HF_SPACE_NAME}")
-        last_connection_attempt = None
-        return gradio_client
+        print(f"[GRADIO] Appel direct API: {HF_SPACE_API}/chat_function")
+
+        # Gradio API flow: POST /call/{fn_name} → GET /call/{fn_name}/{event_id}
+        # Step 1: Initier l'appel
+        response = http_client.post(
+            f"{HF_SPACE_API}/chat_function",
+            json={
+                "data": [message, history]
+            }
+        )
+
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=f"Gradio API error: {response.text}"
+            )
+
+        result = response.json()
+        event_id = result.get("event_id")
+
+        if not event_id:
+            raise HTTPException(status_code=500, detail="No event_id in response")
+
+        # Step 2: Récupérer le résultat via SSE
+        sse_url = f"{HF_SPACE_API}/chat_function/{event_id}"
+        print(f"[GRADIO] Récupération résultat: {sse_url}")
+
+        with http_client.stream("GET", sse_url) as sse_response:
+            for line in sse_response.iter_lines():
+                if line.startswith("data: "):
+                    data_str = line[6:]  # Remove "data: " prefix
+
+                    if data_str.strip() == "":
+                        continue
+
+                    try:
+                        import json
+                        data = json.loads(data_str)
+
+                        # Le dernier message contient le résultat final
+                        if data.get("msg") == "process_completed":
+                            output = data.get("output", {}).get("data")
+                            if output and len(output) >= 2:
+                                # output = [textbox_value, updated_history]
+                                updated_history = output[1]
+                                if updated_history and len(updated_history) > 0:
+                                    return updated_history[-1][1]  # Dernière réponse assistant
+                    except json.JSONDecodeError:
+                        continue
+
+        raise HTTPException(status_code=500, detail="No valid response from Gradio API")
+
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="Timeout calling HF Space")
     except Exception as e:
-        print(f"⚠️ Connexion Gradio échouée: {e}")
-        last_connection_attempt = time.time()
-        return None
+        print(f"[GRADIO] ❌ Erreur API: {e}")
+        raise HTTPException(status_code=500, detail=f"Gradio API error: {str(e)}")
 
 app = FastAPI(title="SNB API - HF Space Bridge")
 
@@ -103,16 +139,20 @@ async def root():
 
 @app.get("/health")
 async def health():
-    # Essayer de se connecter si pas encore fait
-    client = get_gradio_client()
-    space_status = "connected" if client is not None else "disconnected"
+    # Tester la connectivité HTTP au Space
+    try:
+        response = http_client.get(f"{HF_SPACE_URL}/", timeout=5.0)
+        space_status = "connected" if response.status_code == 200 else "disconnected"
+    except Exception:
+        space_status = "disconnected"
 
     return {
         "status": "ok",
-        "mode": "hf_space",
+        "mode": "hf_space_http",
         "space_name": HF_SPACE_NAME,
         "space_url": HF_SPACE_URL,
-        "gradio_client": space_status
+        "space_api": HF_SPACE_API,
+        "space_status": space_status
     }
 
 def detecter_contexte(message: str) -> str:
@@ -128,45 +168,15 @@ def detecter_contexte(message: str) -> str:
     else:
         return "neutre"
 
-def call_hf_space(message: str, history: List[List]) -> str:
-    """Appelle le Space HF Gradio pour génération"""
+async def call_hf_space(message: str, history: List[List]) -> str:
+    """Appelle le Space HF Gradio pour génération (via HTTP direct)"""
 
-    # Obtenir le client (avec retry automatique)
-    client = get_gradio_client()
+    # Convertir histoire au format Gradio
+    # Format: [[user_msg, assistant_msg], ...] ou [[None, greeting]]
+    gradio_history = [[h[0], h[1]] for h in history if h[0] or h[1]]
 
-    if not client:
-        raise HTTPException(
-            status_code=503,
-            detail="Gradio client non connecté - le Space est peut-être en pause ou en train de démarrer"
-        )
-
-    try:
-        # Convertir histoire au format Gradio
-        # Format: [[user_msg, assistant_msg], ...] ou [[None, greeting]]
-        gradio_history = [[h[0], h[1]] for h in history if h[0] or h[1]]
-
-        # Appel Gradio client
-        result = client.predict(
-            message=message,
-            history=gradio_history,
-            api_name="//chat_function"
-        )
-
-        # Result format: [textbox_value, updated_history]
-        # On veut juste la dernière réponse de l'historique
-        updated_history = result[1]  # [[user, assistant], ...]
-
-        if updated_history and len(updated_history) > 0:
-            last_response = updated_history[-1][1]  # Dernière réponse assistant
-            return last_response
-        else:
-            raise HTTPException(status_code=500, detail="Pas de réponse du modèle")
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erreur appel HF Space: {str(e)}"
-        )
+    # Appel HTTP direct à l'API Gradio
+    return await call_gradio_api(message, gradio_history)
 
 @app.post("/init/{philosopher}", response_model=InitResponse)
 async def init_philosopher(philosopher: str):
@@ -201,7 +211,7 @@ async def chat(philosopher: str, request: ChatRequest):
 
     # Appeler HF Space
     try:
-        response = call_hf_space(enriched_message, request.history or [])
+        response = await call_hf_space(enriched_message, request.history or [])
     except HTTPException as e:
         # Fallback sur mock si HF Space inaccessible
         print(f"[WARN] HF Space inaccessible, fallback mock: {e.detail}")
