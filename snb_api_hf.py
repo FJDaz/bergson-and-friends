@@ -24,69 +24,36 @@ HF_SPACE_API = f"{HF_SPACE_URL}/call"
 # HTTP client pour appels directs
 http_client = httpx.Client(timeout=60.0)
 
-async def call_gradio_api(message: str, history: List[List]) -> str:
+async def call_rest_api(message: str, history: List[List]) -> str:
     """
-    Appel direct à l'API Gradio via HTTP (bypass gradio_client)
-    Utilise le endpoint /call/chat_function
+    Appel direct à l'API REST FastAPI du Space (bypass Gradio)
     """
     try:
-        print(f"[GRADIO] Appel direct API: {HF_SPACE_API}/chat_function")
+        print(f"[REST API] Appel: {HF_SPACE_URL}/chat")
 
-        # Gradio API flow: POST /call/{fn_name} → GET /call/{fn_name}/{event_id}
-        # Step 1: Initier l'appel
+        # Appel REST simple
         response = http_client.post(
-            f"{HF_SPACE_API}/chat_function",
+            f"{HF_SPACE_URL}/chat",
             json={
-                "data": [message, history]
+                "message": message,
+                "history": history
             }
         )
 
         if response.status_code != 200:
             raise HTTPException(
                 status_code=response.status_code,
-                detail=f"Gradio API error: {response.text}"
+                detail=f"REST API error: {response.text}"
             )
 
         result = response.json()
-        event_id = result.get("event_id")
-
-        if not event_id:
-            raise HTTPException(status_code=500, detail="No event_id in response")
-
-        # Step 2: Récupérer le résultat via SSE
-        sse_url = f"{HF_SPACE_API}/chat_function/{event_id}"
-        print(f"[GRADIO] Récupération résultat: {sse_url}")
-
-        with http_client.stream("GET", sse_url) as sse_response:
-            for line in sse_response.iter_lines():
-                if line.startswith("data: "):
-                    data_str = line[6:]  # Remove "data: " prefix
-
-                    if data_str.strip() == "":
-                        continue
-
-                    try:
-                        import json
-                        data = json.loads(data_str)
-
-                        # Le dernier message contient le résultat final
-                        if data.get("msg") == "process_completed":
-                            output = data.get("output", {}).get("data")
-                            if output and len(output) >= 2:
-                                # output = [textbox_value, updated_history]
-                                updated_history = output[1]
-                                if updated_history and len(updated_history) > 0:
-                                    return updated_history[-1][1]  # Dernière réponse assistant
-                    except json.JSONDecodeError:
-                        continue
-
-        raise HTTPException(status_code=500, detail="No valid response from Gradio API")
+        return result.get("reply", "")
 
     except httpx.TimeoutException:
         raise HTTPException(status_code=504, detail="Timeout calling HF Space")
     except Exception as e:
-        print(f"[GRADIO] ❌ Erreur API: {e}")
-        raise HTTPException(status_code=500, detail=f"Gradio API error: {str(e)}")
+        print(f"[REST API] ❌ Erreur: {e}")
+        raise HTTPException(status_code=500, detail=f"REST API error: {str(e)}")
 
 app = FastAPI(title="SNB API - HF Space Bridge")
 
@@ -169,14 +136,14 @@ def detecter_contexte(message: str) -> str:
         return "neutre"
 
 async def call_hf_space(message: str, history: List[List]) -> str:
-    """Appelle le Space HF Gradio pour génération (via HTTP direct)"""
+    """Appelle le Space HF REST API pour génération (bypass Gradio)"""
 
-    # Convertir histoire au format Gradio
+    # Convertir histoire au format API
     # Format: [[user_msg, assistant_msg], ...] ou [[None, greeting]]
-    gradio_history = [[h[0], h[1]] for h in history if h[0] or h[1]]
+    api_history = [[h[0], h[1]] for h in history if h[0] or h[1]]
 
-    # Appel HTTP direct à l'API Gradio
-    return await call_gradio_api(message, gradio_history)
+    # Appel HTTP direct à l'API REST FastAPI
+    return await call_rest_api(message, api_history)
 
 @app.post("/init/{philosopher}", response_model=InitResponse)
 async def init_philosopher(philosopher: str):
