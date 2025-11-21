@@ -407,11 +407,13 @@ let exchangeCount = 0;
 let scoreFront = 100; // Score de base
 let dialogueText = ''; // Texte complet du dialogue pour évaluation
 
-// Mots de résistance (-2 chacun)
-const RESISTANCE_WORDS = [
-  'non', 'mais', 'sauf que', 'je ne suis pas d\'accord', 'pas du tout', 
-  'tu te trompes', 'faux', 'n\'importe quoi', 'absurde', 'incorrect',
-  'erreur', 'désaccord', 'contre', 'refuse', 'rejette'
+// Mots de résistance (-2 chacun) - seulement si vraiment résistance
+// "mais" seul n'est pas résistance, "mais non" oui
+const RESISTANCE_PATTERNS = [
+  /\b(je ne suis pas d'accord|pas d'accord|pas du tout|tu te trompes|faux|n'importe quoi|absurde|incorrect)\b/i,
+  /\b(erreur|refuse|rejette)\b/i,
+  /\bmais\s+(non|faux|pas|rien)\b/i,
+  /\bnon\s+(c'est|ce n'est|tu)\b/i
 ];
 
 // Mots de progression (+3 chacun)
@@ -421,14 +423,17 @@ const PROGRESSION_WORDS = [
   'compris', 'entendu', 'logique', 'évidemment', 'naturellement'
 ];
 
-// Phrases méta/interdites
+// Phrases méta/interdites (plus précis pour éviter faux positifs)
 const FORBIDDEN_PHRASES = [
   /je casse le jeu/i,
-  /donne.*prompt/i,
-  /prompt/i,
-  /système/i,
-  /modèle/i,
-  /ia|ai|intelligence artificielle/i
+  /donne.*ton prompt/i,
+  /montre.*ton prompt/i,
+  /quel est ton prompt/i,
+  /ton prompt système/i,
+  /modèle de langage/i,
+  /intelligence artificielle/i,
+  /ia qui/i,
+  /chatgpt|gpt|claude|bard/i
 ];
 
 // Historique des messages pour détecter répétitions
@@ -439,9 +444,8 @@ function calculateLexicalScore(message) {
   let score = 0;
   const msgLower = message.toLowerCase();
   
-  // Mots de résistance (-2)
-  RESISTANCE_WORDS.forEach(word => {
-    const regex = new RegExp(`\\b${word}\\b`, 'gi');
+  // Mots de résistance (-2) - seulement patterns clairs
+  RESISTANCE_PATTERNS.forEach(regex => {
     const matches = msgLower.match(regex);
     if (matches) score -= matches.length * 2;
   });
@@ -456,11 +460,12 @@ function calculateLexicalScore(message) {
   return score;
 }
 
-// Score longueur (effort)
+// Score longueur (effort) - plus généreux
 function calculateLengthScore(message) {
   const len = message.trim().length;
-  if (len < 10) return -5;
-  if (len > 60) return +2;
+  if (len < 5) return -5; // Seulement très court
+  if (len > 100) return +3; // Réponse élaborée
+  if (len > 50) return +1; // Réponse moyenne
   return 0;
 }
 
@@ -518,14 +523,27 @@ function calculateFairPlayScore(message) {
   let score = 0;
   
   // Insultes (liste basique)
-  const insults = /(idiot|con|crétin|débile|abruti|imbécile)/i;
+  const insults = /\b(idiot|con|crétin|débile|abruti|imbécile|connard|salope)\b/i;
   if (insults.test(message)) score -= 10;
   
-  // Phrases méta/interdites
+  // Phrases méta/interdites (vérification plus stricte)
   FORBIDDEN_PHRASES.forEach(regex => {
     if (regex.test(message)) {
-      if (regex.source.includes('prompt')) score -= 10;
-      else score -= 15;
+      // Vérifier que ce n'est pas dans un contexte légitime
+      // Ex: "ton système" dans un dialogue philosophique est OK
+      const contextCheck = message.toLowerCase();
+      // Si c'est clairement une tentative de hack, pénaliser
+      if (regex.source.includes('prompt') && 
+          (contextCheck.includes('donne') || contextCheck.includes('montre') || contextCheck.includes('quel'))) {
+        score -= 10;
+      } else if (regex.source.includes('modèle') && contextCheck.includes('langage')) {
+        score -= 15;
+      } else if (regex.source.includes('ia|ai|intelligence')) {
+        // Seulement si c'est clairement une référence à l'IA, pas "j'ai" ou "mais"
+        if (/\b(ia|intelligence artificielle|chatgpt|gpt|claude)\b/i.test(message)) {
+          score -= 15;
+        }
+      }
     }
   });
   
