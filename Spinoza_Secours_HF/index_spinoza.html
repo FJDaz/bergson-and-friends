@@ -615,9 +615,9 @@ function showFinalResult(data) {
   document.body.appendChild(modal);
 }
 
-// Intégration dans submitQuestion existante
-const originalSubmitQuestion = submitQuestion;
-submitQuestion = async function(userMessage) {
+// Intercepter submitQuestion pour scoring
+const originalSubmitQuestion = window.submitQuestion || submitQuestion;
+window.submitQuestion = async function(userMessage) {
   // Calculer score avant envoi
   const messageScore = calculateMessageScore(userMessage);
   scoreFront += messageScore;
@@ -627,7 +627,7 @@ submitQuestion = async function(userMessage) {
   updateGameUI();
   
   // Appel original
-  const result = await originalSubmitQuestion(userMessage);
+  await originalSubmitQuestion(userMessage);
   
   // Mettre à jour dialogue text après réponse
   if (conversationHistory.length > 0) {
@@ -636,8 +636,6 @@ submitQuestion = async function(userMessage) {
       updateDialogueText(lastExchange[0], lastExchange[1]);
     }
   }
-  
-  return result;
 };
 
 // Initialiser UI au démarrage
