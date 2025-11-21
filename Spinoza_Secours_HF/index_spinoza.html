@@ -207,6 +207,18 @@ if (mobileTrigger) {
 async function submitQuestion(userMessage) {
   if (!userMessage.trim()) return;
 
+  // 🎮 MAÏEUTHON : Calculer score avant envoi
+  const messageScore = calculateMessageScore(userMessage);
+  scoreFront += messageScore;
+  exchangeCount++;
+  updateGameUI();
+  
+  // Vérifier limite d'échanges
+  if (exchangeCount >= MAX_EXCHANGES) {
+    // Dernier échange, on laisse passer puis on évalue
+    setTimeout(() => endGame(), 1000);
+  }
+
   console.log('[CHAT] Message:', userMessage);
 
   // Désactiver pendant traitement
@@ -252,6 +264,9 @@ async function submitQuestion(userMessage) {
     // Mettre à jour historique
     conversationHistory.push([userMessage, data.reply]);
     renderHistory();
+    
+    // 🎮 MAÏEUTHON : Mettre à jour dialogue text
+    updateDialogueText(userMessage, data.reply);
 
     // Réinitialiser textarea
     if (textarea) textarea.value = '';
