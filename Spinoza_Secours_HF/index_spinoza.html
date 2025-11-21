@@ -223,6 +223,11 @@ async function submitQuestion(userMessage) {
   }
 
   try {
+    // Nettoyer l'historique : enlever les entrées avec null et convertir en strings
+    const cleanHistory = conversationHistory
+      .filter(entry => entry[0] !== null && entry[1] !== null)
+      .map(entry => [String(entry[0]), String(entry[1])]);
+    
     const response = await fetch(`${API_BASE_URL}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json',
@@ -230,7 +235,7 @@ async function submitQuestion(userMessage) {
       },
       body: JSON.stringify({
         message: userMessage,
-        history: conversationHistory
+        history: cleanHistory
       })
     });
 
