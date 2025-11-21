@@ -32,12 +32,17 @@
 
 **Lunr.js** est l'équivalent JavaScript de Whoosh.
 
+**Technologie :** **BM25** (Best Matching 25) - Algorithme de scoring pour recherche full-text
+- Algorithme de ranking développé par Robertson et Walker (1994)
+- Amélioration de TF-IDF avec normalisation de longueur de document
+- Utilisé par Google, Elasticsearch, et la plupart des moteurs de recherche modernes
+
 **Caractéristiques :**
 - ✅ Pure JavaScript (pas de dépendances)
 - ✅ Léger (~14KB minifié)
 - ✅ Rapide pour corpus moyens
 - ✅ Indexation côté client
-- ✅ Recherche avec scoring (BM25)
+- ✅ Recherche avec scoring **BM25** (meilleur que TF-IDF)
 - ✅ Compatible navigateur + Node.js
 
 **Exemple d'utilisation :**
