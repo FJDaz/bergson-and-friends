@@ -199,6 +199,97 @@ def comparer_avec_rag(contexte: str = "confusion") -> None:
     print(f"\n💰 Économie sans RAG: {economie} tokens ({economie/tokens_avec*100:.1f}%)")
     print("=" * 80 + "\n")
 
+def tester_detection_contexte() -> None:
+    """
+    Teste la fonction de détection de contexte avec des exemples
+    """
+    print("=" * 80)
+    print("🧪 TEST DÉTECTION CONTEXTE")
+    print("=" * 80 + "\n")
+    
+    def detecter_contexte(user_input: str) -> str:
+        """Détecte le contexte de la réponse utilisateur"""
+        text_lower = user_input.lower()
+        
+        # Accord
+        if any(word in text_lower for word in ['oui', 'd\'accord', 'exact', 'ok', 'voilà', 'tout à fait']):
+            return "accord"
+        
+        # Confusion
+        if any(phrase in text_lower for phrase in ['comprends pas', 'vois pas', 'c\'est quoi', 'je sais pas', 'pourquoi', 'rapport']):
+            return "confusion"
+        
+        # Résistance
+        if any(word in text_lower for word in ['mais', 'non', 'pas d\'accord', 'faux', 'n\'importe quoi', 'je peux']):
+            return "resistance"
+        
+        return "neutre"
+    
+    exemples = [
+        ("Oui, je suis d'accord", "accord"),
+        ("Je comprends pas", "confusion"),
+        ("Mais non, je peux faire ce que je veux", "resistance"),
+        ("La liberté est importante", "neutre"),
+        ("D'accord, mais alors...", "accord"),  # "d'accord" détecté en premier
+        ("C'est quoi la causalité ?", "confusion"),
+        ("Je ne suis pas d'accord", "resistance"),
+    ]
+    
+    print(f"{'Message':<40} {'Contexte détecté':<20} {'Attendu':<15} {'Status'}")
+    print("-" * 80)
+    
+    for message, attendu in exemples:
+        detecte = detecter_contexte(message)
+        status = "✅" if detecte == attendu else "❌"
+        print(f"{message:<40} {detecte:<20} {attendu:<15} {status}")
+    
+    print("=" * 80 + "\n")
+
+def analyser_mots_cles(prompt: str) -> Dict[str, int]:
+    """
+    Analyse les mots-clés importants dans le prompt
+    """
+    mots_cles = {
+        "spinoza": prompt.lower().count("spinoza"),
+        "première personne": prompt.lower().count("première personne") + prompt.lower().count("premiere personne"),
+        "schème": prompt.lower().count("schème") + prompt.lower().count("scheme"),
+        "mais alors": prompt.lower().count("mais alors"),
+        "donc": prompt.lower().count("donc"),
+        "tutoie": prompt.lower().count("tutoie") + prompt.lower().count("tu/ton/ta"),
+        "concis": prompt.lower().count("concis"),
+        "questionne": prompt.lower().count("questionne"),
+    }
+    return mots_cles
+
+def analyser_prompt_detail(contexte: str) -> None:
+    """
+    Analyse détaillée d'un prompt pour un contexte donné
+    """
+    prompt = construire_prompt_complet(contexte, use_rag_instruction=True)
+    mots_cles = analyser_mots_cles(prompt)
+    
+    print("=" * 80)
+    print(f"🔍 ANALYSE DÉTAILLÉE - Contexte: {contexte.upper()}")
+    print("=" * 80)
+    print(f"\n📊 Statistiques:")
+    print(f"  Tokens estimés: {estimer_tokens(prompt)}")
+    print(f"  Caractères: {len(prompt)}")
+    print(f"  Mots: {len(prompt.split())}")
+    print(f"  Lignes: {len(prompt.splitlines())}")
+    
+    print(f"\n🔑 Mots-clés:")
+    for mot, count in mots_cles.items():
+        if count > 0:
+            print(f"  - '{mot}': {count} occurrence(s)")
+    
+    print(f"\n📝 Sections:")
+    sections = ["STYLE SPINOZIEN", "SCHÈMES LOGIQUES", "MÉTHODE", "TRANSITIONS", "RÈGLES"]
+    for section in sections:
+        present = section in prompt
+        print(f"  {'✅' if present else '❌'} {section}")
+    
+    print("=" * 80 + "\n")
+
 # =============================================================================
 # EXÉCUTION
 # =============================================================================
@@ -223,6 +314,18 @@ if __name__ == "__main__":
     print("TEST 3: TOUS LES CONTEXTES (sans RAG)")
     print("=" * 80 + "\n")
     resultats_sans_rag = test_prompt_contextes(use_rag_instruction=False)
+    
+    # Test 4: Détection contexte
+    print("\n" + "=" * 80)
+    print("TEST 4: DÉTECTION CONTEXTE")
+    print("=" * 80 + "\n")
+    tester_detection_contexte()
+    
+    # Test 5: Analyse détaillée (exemple confusion)
+    print("\n" + "=" * 80)
+    print("TEST 5: ANALYSE DÉTAILLÉE (exemple)")
+    print("=" * 80 + "\n")
+    analyser_prompt_detail("confusion")
     
     print("✅ Tests terminés !")
 
