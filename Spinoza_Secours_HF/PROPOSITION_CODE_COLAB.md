@@ -58,7 +58,8 @@ def detecter_contexte(user_input: str) -> str:
 @torch.no_grad()
 def load_model():
     # Charge Mistral 7B + LoRA
-    # Device: CPU (ou CUDA si GPU)
+    # Device: CUDA (T4 sur Colab) avec quantization 4-bit
+    # Adapter: "FJDaz/mistral-7b-philosophes-lora"
     return model, tokenizer
 ```
 
@@ -89,9 +90,9 @@ def load_model():
 | `max_new_tokens` | 150 | 100-200 selon besoin |
 | `temperature` | 0.7 | 0.5-0.9 |
 | `top_p` | 0.9 | 0.8-0.95 |
-| `use_rag_instruction` | `True` | `False` pour économie max |
-| `device` | `"cpu"` | `"cuda"` si GPU |
-| `adapter_name` | `"FJDaz/mistral-7b-philosophes-lora"` | À ajuster si différent |
+| `use_rag_instruction` | `True` | ✅ Instructions seulement (pas d'injection) |
+| `device` | `"cuda"` | T4 sur Colab |
+| `adapter_name` | `"FJDaz/mistral-7b-philosophes-lora"` | ✅ Confirmé |
 
 ---
 
@@ -178,7 +179,8 @@ Script séparé pour tester/valider le prompt système **SANS toucher** au charg
 
 ### Contenu Proposé
 
-#### Option 1 : Script de Test Prompt (Recommandé)
+#### Option 1 : Script de Test Prompt (✅ CHOISI)
+
 ```python
 # test_prompt_systeme.py
 # - Teste le prompt système avec différents contextes
@@ -197,6 +199,11 @@ Script séparé pour tester/valider le prompt système **SANS toucher** au charg
 - ✅ Teste le prompt sans charger le modèle
 - ✅ Rapide (pas d'inference)
 - ✅ Permet de valider avant utilisation réelle
+- ✅ **Indépendant du frontend** (teste juste le prompt)
+
+**Note BM25 :** Le test BM25 (Lunr.js) nécessite le frontend. Workflow :
+1. **Colab (Option 1)** → Test prompt système → Validation prompt
+2. **Frontend + API** → Test BM25 (Lunr.js) → Validation RAG côté client
 
 #### Option 2 : Script Utilitaires (Si besoin)
 ```python
@@ -214,14 +221,32 @@ Script séparé pour tester/valider le prompt système **SANS toucher** au charg
 
 ---
 
-## ❓ Questions pour Validation
+## ✅ Réponses Validation
 
-1. **Adapter LoRA** : Quel est le nom exact de l'adapter à utiliser ?
-2. **Device** : CPU ou CUDA (GPU disponible ?)
-3. **RAG** : Instructions seulement ou injection passages ?
-4. **Tokens** : Priorité économie ou qualité ?
-5. **Paramètres génération** : `max_new_tokens=150` OK ?
-6. **Script supplémentaire** : Option 1 (Test Prompt) ou Option 2 (Utils) ou aucun ?
+1. **Adapter LoRA** : `"FJDaz/mistral-7b-philosophes-lora"` (trouvé dans `app.py`)
+2. **Device** : **CUDA** (T4 sur Colab) - Utiliser `device="cuda"` avec quantization 4-bit
+3. **RAG** : **Instructions seulement** (pas d'injection passages)
+4. **Tokens** : **Priorité qualité** (pas d'économie maximale)
+5. **Paramètres génération** : `max_new_tokens=150` pour démarrer, ajustable selon tests
+6. **Script supplémentaire** : **Option 1 (Test Prompt)** - Tests en Colab avant frontend
+
+### 📝 Clarification BM25 (Lunr.js)
+
+**Question :** Besoin de frontend pour tester BM25 en même temps ?
+
+**Réponse :**
+- **Script Option 1 (Test Prompt)** : Teste le prompt système **sans modèle ni frontend** (rapide, validation structure)
+- **Test BM25 (Lunr.js)** : Nécessite le **frontend** (`index_spinoza.html`) car c'est côté client (JavaScript)
+- **Recommandation** : 
+  1. D'abord tester le prompt en Colab (Option 1) - validation prompt
+  2. Ensuite tester BM25 avec frontend - validation RAG côté client
+
+**Workflow proposé :**
+```
+Colab (Option 1) → Test prompt système → ✅ Prompt validé
+    ↓
+Frontend + API → Test BM25 (Lunr.js) → ✅ RAG validé
+```
 
 ---
 
