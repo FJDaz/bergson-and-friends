@@ -171,6 +171,49 @@ colab_spinoza_secours_complet.py
 
 ---
 
+## 🔧 Script Supplémentaire Proposé
+
+### Objectif
+Script séparé pour tester/valider le prompt système **SANS toucher** au chargement du modèle ni à l'API.
+
+### Contenu Proposé
+
+#### Option 1 : Script de Test Prompt (Recommandé)
+```python
+# test_prompt_systeme.py
+# - Teste le prompt système avec différents contextes
+# - Affiche le prompt généré (sans génération modèle)
+# - Valide la structure du prompt
+# - Estime les tokens
+```
+
+**Fonctions :**
+- `test_prompt_contextes()` - Teste tous les contextes (accord/confusion/résistance/neutre)
+- `afficher_prompt(contexte)` - Affiche le prompt généré
+- `estimer_tokens(prompt)` - Estime le nombre de tokens
+- `valider_structure(prompt)` - Vérifie que le prompt contient les éléments requis
+
+**Avantages :**
+- ✅ Teste le prompt sans charger le modèle
+- ✅ Rapide (pas d'inference)
+- ✅ Permet de valider avant utilisation réelle
+
+#### Option 2 : Script Utilitaires (Si besoin)
+```python
+# utils_prompt.py
+# - Fonctions utilitaires pour le prompt
+# - Formatage, validation, etc.
+```
+
+**Fonctions possibles :**
+- `formater_prompt(prompt, contexte)` - Formatage avancé
+- `valider_premiere_personne(prompt)` - Vérifie première personne
+- `extraire_schemes(prompt)` - Extrait les schèmes logiques mentionnés
+
+**⚠️ Suggestion :** Seulement si vraiment nécessaire
+
+---
+
 ## ❓ Questions pour Validation
 
 1. **Adapter LoRA** : Quel est le nom exact de l'adapter à utiliser ?
@@ -178,6 +221,7 @@ colab_spinoza_secours_complet.py
 3. **RAG** : Instructions seulement ou injection passages ?
 4. **Tokens** : Priorité économie ou qualité ?
 5. **Paramètres génération** : `max_new_tokens=150` OK ?
+6. **Script supplémentaire** : Option 1 (Test Prompt) ou Option 2 (Utils) ou aucun ?
 
 ---
 
