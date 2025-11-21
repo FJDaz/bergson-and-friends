@@ -1,0 +1,21 @@
+Le problème d'incompatibilité entre gradio_client et la version de Gradio utilisée dans un Space est connu et récurrent. Plusieurs issues sur GitHub confirment que les versions des deux composants doivent être compatibles pour que l'endpoint /info renvoie un JSON correct et que le client ne plante pas avec des erreurs JSONDecodeError. Par exemple :
+
+La version 0.9.0 de gradio_client fonctionne uniquement avec Gradio version 4.17.0. Une différence de version entre gradio_client et Gradio dans le Space peut causer ces erreurs.
+
+Des erreurs similaires sont remontées pour des incompatibilités entre Gradio 3.x, 4.x et diverses versions du client gradio_client (Python ou JS client).
+
+Il est recommandé d'avoir la dernière version stable de Gradio (ex. 4.38.1+) et du client gradio_client pour éviter ces dysfonctionnements.
+
+Il arrive que le Space soit "running" mais que l'API ne soit pas complètement exposée ou compatible à cause de cette inadéquation de versions, causant le non-retour d'un JSON valide sur /info.
+
+Un nettoyage des logs du Space et la vérification des versions exactes de Gradio et du client utilisés est conseillée.
+
+Ainsi, la solution passe souvent par :
+
+Vérifier et faire coïncider les versions de Gradio dans le Space et de gradio_client dans le client (faire un "pin" des versions compatibles).
+
+Vérifier les logs du Space pour diagnostiquer si l'API Gradio est correctement exposée ou si un problème spécifique empêche le JSON sur /info.
+
+Mettre à jour vers les dernières versions stables et cohérentes côté client et serveur (Space).
+
+Ces éléments signalent bien que le problème que vous rencontrez est lié à une incompatibilité de versions entre gradio_client et Gradio dans le Space, ce qui provoque la non-réponse JSON sur /info et le crash JSONDecodeError du client gradio_client.​

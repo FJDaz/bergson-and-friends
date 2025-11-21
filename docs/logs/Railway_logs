@@ -1,0 +1,119 @@
+    return func(*args, **kwds)
+    _check_generic(self, params, self._nparams)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/typing_extensions.py", line 3136, in _check_generic
+TypeError: Too many arguments for typing.List; actual 2, expected 1
+TypeError: Too many arguments for typing.List; actual 2, expected 1
+    history: Optional[List[List[Optional[str], Optional[str]]]] = None
+                           ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mise/installs/python/3.11.9/lib/python3.11/typing.py", line 1592, in __getitem__
+  File "/mise/installs/python/3.11.9/lib/python3.11/typing.py", line 379, in inner
+    _check_generic(self, params, self._nparams)
+    return func(*args, **kwds)
+  File "/app/.venv/lib/python3.11/site-packages/typing_extensions.py", line 3136, in _check_generic
+    raise TypeError(f"Too {'many' if alen > elen else 'few'} arguments"
+           ^^^^^^^^^^^^^^^^^^^
+Loaded as API: https://fjdaz-bergsonandfriends.hf.space ✔
+✅ Gradio client connected to FJDaz/bergsonAndFriends
+Traceback (most recent call last):
+  File "/app/snb_api_hf.py", line 54, in <module>
+    class ChatRequest(BaseModel):
+  File "/app/snb_api_hf.py", line 56, in ChatRequest
+Loaded as API: https://fjdaz-bergsonandfriends.hf.space ✔
+✅ Gradio client connected to FJDaz/bergsonAndFriends
+Traceback (most recent call last):
+  File "/app/snb_api_hf.py", line 54, in <module>
+    class ChatRequest(BaseModel):
+  File "/app/snb_api_hf.py", line 56, in ChatRequest
+    history: Optional[List[List[Optional[str], Optional[str]]]] = None
+                           ~~~~^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^
+  File "/mise/installs/python/3.11.9/lib/python3.11/typing.py", line 379, in inner
+    return func(*args, **kwds)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/mise/installs/python/3.11.9/lib/python3.11/typing.py", line 1592, in __getitem__
+    _check_generic(self, params, self._nparams)
+  File "/app/.venv/lib/python3.11/site-packages/typing_extensions.py", line 3136, in _check_generic
+    raise TypeError(f"Too {'many' if alen > elen else 'few'} arguments"
+TypeError: Too many arguments for typing.List; actual 2, expected 1
+Loaded as API: https://fjdaz-bergsonandfriends.hf.space ✔
+  File "/mise/installs/python/3.11.9/lib/python3.11/typing.py", line 1592, in __getitem__
+    _check_generic(self, params, self._nparams)
+  File "/app/.venv/lib/python3.11/site-packages/typing_extensions.py", line 3136, in _check_generic
+    raise TypeError(f"Too {'many' if alen > elen else 'few'} arguments"
+✅ Gradio client connected to FJDaz/bergsonAndFriends
+Traceback (most recent call last):
+  File "/app/snb_api_hf.py", line 54, in <module>
+    class ChatRequest(BaseModel):
+  File "/app/snb_api_hf.py", line 56, in ChatRequest
+    history: Optional[List[List[Optional[str], Optional[str]]]] = None
+                           ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mise/installs/python/3.11.9/lib/python3.11/typing.py", line 379, in inner
+    return func(*args, **kwds)
+           ^^^^^^^^^^^^^^^^^^^
+TypeError: Too many arguments for typing.List; actual 2, expected 1
+Loaded as API: https://fjdaz-bergsonandfriends.hf.space ✔
+✅ Gradio client connected to FJDaz/bergsonAndFriends
+Traceback (most recent call last):
+  File "/app/snb_api_hf.py", line 54, in <module>
+    class ChatRequest(BaseModel):
+  File "/app/snb_api_hf.py", line 56, in ChatRequest
+    history: Optional[List[List[Optional[str], Optional[str]]]] = None
+                           ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mise/installs/python/3.11.9/lib/python3.11/typing.py", line 379, in inner
+    return func(*args, **kwds)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/mise/installs/python/3.11.9/lib/python3.11/typing.py", line 1592, in __getitem__
+    _check_generic(self, params, self._nparams)
+  File "/app/.venv/lib/python3.11/site-packages/typing_extensions.py", line 3136, in _check_generic
+    raise TypeError(f"Too {'many' if alen > elen else 'few'} arguments"
+TypeError: Too many arguments for typing.List; actual 2, expected 1
+  File "/mise/installs/python/3.11.9/lib/python3.11/typing.py", line 1592, in __getitem__
+    _check_generic(self, params, self._nparams)
+  File "/app/.venv/lib/python3.11/site-packages/typing_extensions.py", line 3136, in _check_generic
+  File "/app/snb_api_hf.py", line 56, in ChatRequest
+^^^^^^^^^^^^^^^
+    history: Optional[List[List[Optional[str], Optional[str]]]] = None
+  File "/mise/installs/python/3.11.9/lib/python3.11/typing.py", line 379, in inner
+                           ~~~~^^^^^^^^^^^^^^^
+Loaded as API: https://fjdaz-bergsonandfriends.hf.space ✔
+    return func(*args, **kwds)
+✅ Gradio client connected to FJDaz/bergsonAndFriends
+           ^^^^^^^^^^^^^^^^^^^
+Traceback (most recent call last):
+  File "/app/snb_api_hf.py", line 54, in <module>
+    class ChatRequest(BaseModel):
+    raise TypeError(f"Too {'many' if alen > elen else 'few'} arguments"
+TypeError: Too many arguments for typing.List; actual 2, expected 1
+Loaded as API: https://fjdaz-bergsonandfriends.hf.space ✔
+✅ Gradio client connected to FJDaz/bergsonAndFriends
+Traceback (most recent call last):
+  File "/app/snb_api_hf.py", line 54, in <module>
+    class ChatRequest(BaseModel):
+  File "/app/snb_api_hf.py", line 56, in ChatRequest
+    history: Optional[List[List[Optional[str], Optional[str]]]] = None
+                           ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mise/installs/python/3.11.9/lib/python3.11/typing.py", line 379, in inner
+    return func(*args, **kwds)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/mise/installs/python/3.11.9/lib/python3.11/typing.py", line 1592, in __getitem__
+    _check_generic(self, params, self._nparams)
+  File "/app/.venv/lib/python3.11/site-packages/typing_extensions.py", line 3136, in _check_generic
+    raise TypeError(f"Too {'many' if alen > elen else 'few'} arguments"
+TypeError: Too many arguments for typing.List; actual 2, expected 1
+    history: Optional[List[List[Optional[str], Optional[str]]]] = None
+                           ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mise/installs/python/3.11.9/lib/python3.11/typing.py", line 379, in inner
+    return func(*args, **kwds)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/mise/installs/python/3.11.9/lib/python3.11/typing.py", line 1592, in __getitem__
+    _check_generic(self, params, self._nparams)
+  File "/app/.venv/lib/python3.11/site-packages/typing_extensions.py", line 3136, in _check_generic
+    raise TypeError(f"Too {'many' if alen > elen else 'few'} arguments"
+TypeError: Too many arguments for typing.List; actual 2, expected 1
+Loaded as API: https://fjdaz-bergsonandfriends.hf.space ✔
+✅ Gradio client connected to FJDaz/bergsonAndFriends
+Traceback (most recent call last):
+  File "/app/snb_api_hf.py", line 54, in <module>
+    class ChatRequest(BaseModel):
+  File "/app/snb_api_hf.py", line 56, in ChatRequest

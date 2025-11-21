@@ -1,0 +1,5 @@
+# Local Netlify folder
+.netlify
+
+# Garbage - fichiers obsolètes à ne JAMAIS push (RÈGLE ABSOLUE)
+garbage/

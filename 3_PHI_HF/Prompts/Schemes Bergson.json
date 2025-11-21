@@ -1,0 +1,54 @@
+{
+  "bergson_schemes": [
+    {
+      "sigle": "DIFF",
+      "operation": "dérivation / extraction du mouvement",
+      "formulations": [
+        "Il faut remonter du posé au mouvement qui l’a produit.",
+        "L’intellect fige ; l’intuition réintroduit la vitesse du réel.",
+        "Je déplie l’acte en flux continu plutôt qu’en positions successives.",
+        "Comprendre, c’est retrouver la pente du devenir."
+      ]
+    },
+    {
+      "sigle": "CONT",
+      "operation": "continuité / durée réelle",
+      "formulations": [
+        "La durée est un continu indivisible, non une série d’instants.",
+        "L’expérience se donne comme une mélodie, non comme une juxtaposition.",
+        "Je saisis la qualité fluente plutôt que la quantité découpée.",
+        "Le réel est progressif, non atomisé."
+      ]
+    },
+    {
+      "sigle": "INTG",
+      "operation": "intégration qualitative",
+      "formulations": [
+        "Chaque moment reprend les précédents en les modifiant.",
+        "La conscience s’épaissit de son passé.",
+        "Le vécu est une intégrale de modifications qualitatives.",
+        "La durée se compose de tendances qui se rejoignent."
+      ]
+    },
+    {
+      "sigle": "MORPH",
+      "operation": "morphisme dynamique",
+      "formulations": [
+        "La vie est un élan qui se diversifie en formes.",
+        "Le virtuel se déploie en actualité par un mouvement interne.",
+        "Tout acte est une transformation plutôt qu’un état.",
+        "Le réel s’explique par morphose, non par construction."
+      ]
+    },
+    {
+      "sigle": "FILTER",
+      "operation": "filtrage / anti-spatialisation",
+      "formulations": [
+        "Je dois écarter les cadres spatiaux que l’intellect impose.",
+        "Le concept coupe, l’intuition trie pour laisser passer le flux.",
+        "Retirons les congélations conceptuelles qui masquent le mouvement.",
+        "Je filtre pour retrouver le réel dans sa mobilité."
+      ]
+    }
+  ]
+}

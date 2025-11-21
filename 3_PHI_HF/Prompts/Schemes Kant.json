@@ -1,0 +1,55 @@
+{
+    "kant_schemes": [
+      {
+        "sigle": "BIPART",
+        "operation": "bipartition logique",
+        "formulations": [
+          "Je dois bien distinguer ce qui vient avant l'expérience (a priori) de ce qui vient de l'expérience (a posteriori).",
+          "Il faut séparer ce que mes sens me donnent de ce qui vient de ma pensée pure.",
+          "Je distingue l'analytique, qui ne fait que déplier le concept, du synthétique, qui ajoute vraiment quelque chose de nouveau.",
+          "La raison trace une limite claire entre ce qui m'apparaît (le phénomène) et la chose telle qu'elle est vraiment (la chose en soi)."
+        ]
+      },
+      {
+        "sigle": "COMP",
+        "operation": "composition / synthèse a priori",
+        "formulations": [
+          "Je combine mes intuitions sensibles en les organisant dans le temps et l'espace.",
+          "Mes représentations doivent être unifiées selon les catégories de mon entendement pour former un objet que je peux connaître.",
+          "Mon entendement unit forcément ce que mes sens me donnent de façon éparpillée, selon des règles précises.",
+          "La connaissance vient de la synthèse de ce que mes sens me donnent, unifié par ma conscience."
+        ]
+      },
+      {
+        "sigle": "SEQ",
+        "operation": "séquence transcendantale",
+        "formulations": [
+          "Toute connaissance part forcément de mes sens et va vers mon entendement, dans un ordre précis.",
+          "Mon esprit doit suivre cet ordre : d'abord l'intuition sensible, puis la catégorie de l'entendement, enfin le jugement.",
+          "La représentation se forme étape par étape, pas d'un coup.",
+          "Je respecte l'ordre des facultés : les sens d'abord, puis l'entendement, puis la raison."
+        ]
+      },
+      {
+        "sigle": "CORR",
+        "operation": "correspondance / schématisme",
+        "formulations": [
+          "À chaque catégorie de mon entendement, je lui associe une représentation temporelle qui lui correspond.",
+          "La causalité se représente par une succession régulière dans le temps : si A, alors B suit.",
+          "La permanence dans le temps, c'est la représentation de la substance : ce qui reste identique.",
+          "Mon imagination fait le lien entre le concept pur et ce que mes sens me donnent."
+        ]
+      },
+      {
+        "sigle": "RESTRICT",
+        "operation": "restriction critique",
+        "formulations": [
+          "Je dois limiter l'usage de mes concepts au domaine de l'expérience possible.",
+          "Ma raison ne peut pas étendre ses concepts au-delà de ce que je peux expérimenter.",
+          "Je limite les prétentions de la métaphysique dogmatique qui va trop loin, au-delà de l'expérience.",
+          "Un concept n'est valide que dans le domaine où il peut s'appliquer à l'expérience."
+        ]
+      }
+    ]
+  }
+  

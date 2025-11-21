@@ -1,0 +1,82 @@
+# Endpoints API Gradio - Space HF FJDaz/bergsonAndFriends
+
+## Space URL
+https://fjdaz-bergsonandfriends.hf.space
+
+## Endpoint 1: //chat_function
+**Fonction :** Chat Gradio principal
+
+**Paramètres :**
+- `message` (str, Required) : Message de l'utilisateur
+- `history` (tuple, Default: [[None, "Bonjour ! Je suis Spinoza..."]] ) : Historique de conversation
+
+**Retourne :**
+- `[0]` str : Valeur du Textbox (message vide)
+- `[1]` tuple : Historique mis à jour (Chatbot)
+
+**Exemple Python :**
+```python
+from gradio_client import Client
+
+client = Client("FJDaz/bergsonAndFriends")
+result = client.predict(
+    message="Hello!!",
+    history=[[None,"Bonjour ! Je suis Spinoza. Discutons ensemble de cette question :\n\n**Suis-je esclave de mes désirs ?**\n\nQu'en penses-tu ?"]],
+    api_name="//chat_function"
+)
+print(result)
+```
+
+---
+
+## Endpoint 2: /lambda
+**Fonction :** Lambda (retourne l'historique initial)
+
+**Paramètres :**
+- Aucun
+
+**Retourne :**
+- `tuple` : Historique de conversation (Chatbot)
+
+**Exemple Python :**
+```python
+from gradio_client import Client
+
+client = Client("FJDaz/bergsonAndFriends")
+result = client.predict(
+    api_name="/lambda"
+)
+print(result)
+```
+
+---
+
+## Endpoint 3: /lambda_1
+**Fonction :** Lambda 1 (retourne historique et message)
+
+**Paramètres :**
+- Aucun
+
+**Retourne :**
+- `[0]` tuple : Historique de conversation (Chatbot)
+- `[1]` str : Message (Textbox)
+
+**Exemple Python :**
+```python
+from gradio_client import Client
+
+client = Client("FJDaz/bergsonAndFriends")
+result = client.predict(
+    api_name="/lambda_1"
+)
+print(result)
+```
+
+---
+
+## Notes
+
+- **Installation client Python :** `pip install gradio_client`
+- **API name format :** `//chat_function` (double slash pour les endpoints Gradio)
+- **Format history :** `[[user_msg, assistant_msg], ...]` ou `[[None, greeting], ...]` pour message initial
+

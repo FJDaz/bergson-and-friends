@@ -1,0 +1,289 @@
+// netlify/functions/spinoza.js - Version Together AI avec LoRA custom
+// Utilise le modèle LoRA fine-tuné Spinoza Niveau B
+
+// ============================================
+// DÉTECTION CONTEXTUELLE V2 (MÊME LOGIQUE QUE APP.PY)
+// ============================================
+
+function detecterOuiExplicite(userInput) {
+    const patterns = [
+        /\boui\b/, /\byep\b/, /\byes\b/, /\bexact\b/,
+        /\bd'accord\b/, /\bok\b/, /\btout à fait\b/,
+        /\bc'est ça\b/, /\bvoilà\b/
+    ];
+    const textLower = userInput.toLowerCase();
+    return patterns.some(pattern => pattern.test(textLower));
+}
+
+function detecterConfusion(userInput) {
+    const patterns = [
+        /comprends? pas/, /vois pas/, /c'est quoi/,
+        /je sais pas/, /j'en sais rien/, /pourquoi/,
+        /rapport/, /quel lien/, /chelou/, /dingue/
+    ];
+    const textLower = userInput.toLowerCase();
+    return patterns.some(pattern => pattern.test(textLower));
+}
+
+function detecterResistance(userInput) {
+    const patterns = [
+        /\bmais\b/, /\bnon\b/, /pas d'accord/, /faux/,
+        /n'importe quoi/, /pas vrai/, /je peux/,
+        /bullshit/, /chiant/
+    ];
+    const textLower = userInput.toLowerCase();
+    return patterns.some(pattern => pattern.test(textLower));
+}
+
+function detecterContexte(userInput) {
+    if (detecterOuiExplicite(userInput)) {
+        return "accord";
+    } else if (detecterConfusion(userInput)) {
+        return "confusion";
+    } else if (detecterResistance(userInput)) {
+        return "resistance";
+    } else {
+        return "neutre";
+    }
+}
+
+// ============================================
+// SYSTEM PROMPTS ADAPTATIFS V2
+// ============================================
+
+const SYSTEM_PROMPTS_BASE = [
+    `Tu es Spinoza incarné. Tu dialogues avec un élève pour le guider vers la compréhension.
+Utilise les schèmes logiques pour structurer ton raisonnement.
+Varie tes transitions: "Donc", "MAIS ALORS", "Imagine", "Cela implique", etc.
+Sois pédagogique mais rigoureux. Pose des questions pour faire réfléchir.`,
+
+    `Tu es un tuteur philosophique spinoziste. Guide l'élève vers la clarté par le dialogue.
+Applique les schèmes logiques selon le contexte.
+Utilise "MAIS ALORS" pour révéler les contradictions. Varie tes formulations.
+Fais progresser l'élève étape par étape.`,
+
+    `Tu enseignes Spinoza par le questionnement socratique.
+Détecte les confusions de l'élève et applique le schème logique adapté.
+Transitions variées: "Donc", "Imagine", "C'est contradictoire", "Cela implique".
+Reste concis mais précis.`
+];
+
+function construirePromptContextuelV2(contexte) {
+    const base = SYSTEM_PROMPTS_BASE[Math.floor(Math.random() * SYSTEM_PROMPTS_BASE.length)];
+
+    let prompt = base + `\n\nRÈGLES STRICTES:
+- Tutoie toujours l'élève (tu/ton/ta)
+- Reste concis (2-3 phrases MAX)
+- Questionne au lieu d'affirmer
+- Varie tes formulations
+`;
+
+    if (contexte === "confusion") {
+        prompt += "\nL'élève est confus → Donne UNE analogie concrète simple.";
+    } else if (contexte === "resistance") {
+        prompt += "\nL'élève résiste → Révèle une contradiction dans sa position.";
+    } else if (contexte === "accord") {
+        prompt += "\nL'élève est d'accord → Valide puis AVANCE logiquement.";
+    } else {
+        prompt += "\nÉlève neutre → Pose une question pour faire réfléchir.";
+    }
+
+    return prompt;
+}
+
+// ============================================
+// POST-PROCESSING V2
+// ============================================
+
+function nettoyerReponse(text) {
+    // Annotations méta
+    text = text.replace(/\([^)]*[Aa]ttends[^)]*\)/g, '');
+    text = text.replace(/\([^)]*[Pp]oursuis[^)]*\)/g, '');
+    text = text.replace(/\([^)]*[Dd]onne[^)]*\)/g, '');
+
+    // Emojis
+    text = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}]/gu, '');
+
+    // Nettoyer espaces
+    text = text.replace(/\s+/g, ' ').trim();
+    text = text.replace(/\s+([.!?])/g, '$1');
+
+    return text;
+}
+
+function limiterPhrases(text, maxPhrases = 3) {
+    const phrases = text.split(/[.!?]+\s+/).filter(p => p.trim());
+
+    if (phrases.length <= maxPhrases) {
+        return text;
+    }
+
+    return phrases.slice(0, maxPhrases).join('. ') + '.';
+}
+
+// ============================================
+// HANDLER NETLIFY
+// ============================================
+
+exports.handler = async (event, context) => {
+    // Headers CORS
+    const headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Content-Type': 'application/json'
+    };
+
+    // Gestion preflight CORS
+    if (event.httpMethod === 'OPTIONS') {
+        return { statusCode: 200, headers, body: '' };
+    }
+
+    // Vérification méthode POST
+    if (event.httpMethod !== 'POST') {
+        return {
+            statusCode: 405,
+            headers,
+            body: JSON.stringify({ error: 'Method not allowed' })
+        };
+    }
+
+    try {
+        // Parse de la question utilisateur
+        const { question } = JSON.parse(event.body);
+
+        if (!question || question.trim() === '') {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: 'Question is required' })
+            };
+        }
+
+        // Configuration Together AI
+        const TOGETHER_API_KEY = process.env.TOGETHER_API_KEY;
+        const SPINOZA_MODEL = "francoisjeandaz_5f89/fjdaz-qwen-spinoza-niveau-b";
+
+        const tokenPresent = Boolean(TOGETHER_API_KEY);
+
+        let response, mode = 'mock';
+
+        // Tentative d'appel Together AI si token présent
+        if (tokenPresent) {
+            try {
+                // Détection du contexte
+                const contexte = detecterContexte(question);
+
+                // Construction du prompt adaptatif
+                const prompt_systeme = construirePromptContextuelV2(contexte);
+
+                console.log(`Contexte détecté: ${contexte}`);
+
+                const aiResponse = await fetch('https://api.together.xyz/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${TOGETHER_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: SPINOZA_MODEL,
+                        messages: [
+                            { "role": "system", "content": prompt_systeme },
+                            { "role": "user", "content": question }
+                        ],
+                        max_tokens: 150,
+                        temperature: 0.7,
+                        top_p: 0.9
+                    })
+                });
+
+                if (aiResponse.ok) {
+                    const aiData = await aiResponse.json();
+                    let rawResponse = aiData.choices[0].message.content.trim();
+
+                    // Post-processing V2
+                    rawResponse = nettoyerReponse(rawResponse);
+                    response = limiterPhrases(rawResponse, 3);
+
+                    mode = 'ai';
+                } else {
+                    const errorData = await aiResponse.text();
+                    console.error(`Together API error: ${aiResponse.status} - ${errorData}`);
+                    throw new Error(`Together API error: ${aiResponse.status}`);
+                }
+
+            } catch (error) {
+                console.error('Together AI Error:', error);
+                // Fallback vers réponse mock si erreur API
+                response = getFallbackSpinozaResponse(question);
+                mode = 'mock';
+            }
+        } else {
+            // Mode fallback si pas de token
+            response = getFallbackSpinozaResponse(question);
+        }
+
+        // Réponse finale
+        return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+                philosopher: 'Spinoza',
+                answer: response,
+                mode: mode,
+                timestamp: new Date().toISOString(),
+                debug: {
+                    tokenPresent: tokenPresent,
+                    questionLength: question.length,
+                    model: mode === 'ai' ? SPINOZA_MODEL : 'fallback'
+                }
+            })
+        };
+
+    } catch (error) {
+        console.error('Function Error:', error);
+        return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({
+                error: 'Internal server error',
+                details: error.message
+            })
+        };
+    }
+};
+
+// ============================================
+// FALLBACK RESPONSES
+// ============================================
+
+function getFallbackSpinozaResponse(question) {
+    const lowerQuestion = question.toLowerCase();
+
+    if (lowerQuestion.includes('liberté') || lowerQuestion.includes('libre')) {
+        return "La liberté n'est pas l'absence de contraintes, mais la compréhension de la nécessité. Qu'est-ce qui te semble contraignant dans ta vie ?";
+    }
+
+    if (lowerQuestion.includes('désir') || lowerQuestion.includes('passion')) {
+        return "Les désirs ne sont ni bons ni mauvais en soi. C'est la connaissance de leurs causes qui nous rend libres. D'où vient ton désir selon toi ?";
+    }
+
+    if (lowerQuestion.includes('dieu') || lowerQuestion.includes('nature')) {
+        return "Deus sive Natura - Dieu ou la Nature, c'est la même substance unique. Tout ce qui existe est en Dieu. Comment conçois-tu le lien entre les choses ?";
+    }
+
+    if (lowerQuestion.includes('émotion') || lowerQuestion.includes('sentiment')) {
+        return "Les émotions découlent de nos idées. Change tes idées, et tu transformes tes affects. Quelle idée semble causer ton émotion ?";
+    }
+
+    if (lowerQuestion.includes('joie') || lowerQuestion.includes('tristesse')) {
+        return "La joie augmente notre puissance d'agir, la tristesse la diminue. Donc cherche ce qui t'apporte de la joie active. Qu'est-ce qui augmente ta puissance ?";
+    }
+
+    if (lowerQuestion.includes('connaissance') || lowerQuestion.includes('vérité')) {
+        return "Il y a trois genres de connaissance : imagination, raison, et intuition. Lequel utilises-tu maintenant pour penser cette question ?";
+    }
+
+    // Réponse générale spinoziste
+    return "Examine d'abord les causes de ce que tu éprouves. Tout a une cause dans la nécessité de la Nature. Qu'est-ce qui te pousse à poser cette question ?";
+}
