@@ -631,27 +631,6 @@ function showFinalResult(data) {
 }
 
 // Intercepter submitQuestion pour scoring
-const originalSubmitQuestion = window.submitQuestion || submitQuestion;
-window.submitQuestion = async function(userMessage) {
-  // Calculer score avant envoi
-  const messageScore = calculateMessageScore(userMessage);
-  scoreFront += messageScore;
-  exchangeCount++;
-  
-  // Mettre à jour UI
-  updateGameUI();
-  
-  // Appel original
-  await originalSubmitQuestion(userMessage);
-  
-  // Mettre à jour dialogue text après réponse
-  if (conversationHistory.length > 0) {
-    const lastExchange = conversationHistory[conversationHistory.length - 1];
-    if (lastExchange[0] && lastExchange[1]) {
-      updateDialogueText(lastExchange[0], lastExchange[1]);
-    }
-  }
-};
 
 // Initialiser UI au démarrage
 updateGameUI();
