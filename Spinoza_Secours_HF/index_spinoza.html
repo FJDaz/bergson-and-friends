@@ -22,6 +22,14 @@
         <img src="https://fjdaz.com/bergson/statics/img/Spinoza.png" alt="Baruch Spinoza">
       </button>
       <div class="dialogue" hidden>
+        <!-- 🎮 Maïeuthon - Affichage score et compteur -->
+        <div id="maieuthon-score-desktop" style="background: rgba(0,0,0,0.8); color: white; padding: 10px 15px; border-radius: 5px; margin-bottom: 10px; font-family: monospace; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <span style="font-weight: bold;">🎮 Maïeuthon</span>
+            <span id="maieuthon-exchange-count" style="margin-left: 15px;">Échanges: 0/8</span>
+          </div>
+          <div id="maieuthon-score-value" style="font-size: 18px; font-weight: bold; color: #4CAF50;">Score: 100</div>
+        </div>
         <div class="qa-history"></div>
         <form class="qa-form">
           <textarea id="question-spinoza" name="question" placeholder="Pose ta question à Spinoza..."></textarea>
@@ -58,6 +66,15 @@
       <div class="mobile-active-philosopher">
         <img id="mobile-active-img" src="https://fjdaz.com/bergson/statics/img/Spinoza.png" alt="Baruch Spinoza">
         <h2 id="mobile-active-name">Baruch Spinoza</h2>
+      </div>
+      
+      <!-- 🎮 Maïeuthon - Affichage score mobile -->
+      <div id="maieuthon-score-mobile" style="background: rgba(0,0,0,0.8); color: white; padding: 10px 15px; margin: 10px; border-radius: 5px; font-family: monospace; display: flex; justify-content: space-between; align-items: center; font-size: 14px;">
+        <div>
+          <span style="font-weight: bold;">🎮 Maïeuthon</span>
+          <span id="maieuthon-exchange-count-mobile" style="margin-left: 10px;">0/8</span>
+        </div>
+        <div id="maieuthon-score-value-mobile" style="font-weight: bold; color: #4CAF50;">100</div>
       </div>
       
       <!-- Zone conversation -->
@@ -601,33 +618,70 @@ async function endGame() {
 
 // Afficher résultat final
 function showFinalResult(data) {
+  // Créer modal avec placeholder dédié
   const modal = document.createElement('div');
-  modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: flex; align-items: center; justify-content: center;';
+  modal.id = 'maieuthon-result-modal';
+  modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;';
+  
+  const finalScore = data.score_final || scoreFront;
+  let scoreColor = '#4CAF50';
+  if (finalScore < 50) scoreColor = '#F44336';
+  else if (finalScore < 80) scoreColor = '#FF9800';
   
   modal.innerHTML = `
-    <div style="background: white; padding: 30px; border-radius: 10px; max-width: 600px; text-align: center;">
-      <h2 style="color: #333; margin-bottom: 20px;">🎓 Résultat du Maïeuthon</h2>
-      <div style="font-size: 48px; font-weight: bold; color: #4CAF50; margin: 20px 0;">
-        ${data.score_final || scoreFront}/100
+    <div style="background: white; padding: 40px; border-radius: 15px; max-width: 600px; width: 100%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+      <h2 style="color: #333; margin-bottom: 10px; font-size: 24px;">🎓 Résultat du Maïeuthon</h2>
+      <div style="font-size: 64px; font-weight: bold; color: ${scoreColor}; margin: 20px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">
+        ${finalScore}/100
       </div>
-      <div style="margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 5px; font-style: italic;">
+      
+      <!-- Message final du philosophe -->
+      <div id="maieuthon-final-message" style="margin: 25px 0; padding: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border-radius: 10px; font-style: italic; font-size: 16px; line-height: 1.6; color: #333; min-height: 80px; display: flex; align-items: center; justify-content: center;">
         ${data.message_final || 'Merci pour ce dialogue.'}
       </div>
+      
+      <!-- Détails de l'évaluation -->
       ${data.details_model ? `
-        <div style="margin-top: 20px; font-size: 12px; color: #666;">
-          Compréhension: ${data.details_model.comprehension}/10<br>
-          Coopération: ${data.details_model.cooperation}/10<br>
-          Progression: ${data.details_model.progression}/10
+        <div id="maieuthon-details" style="margin-top: 25px; padding: 15px; background: #f9f9f9; border-radius: 8px; font-size: 14px; color: #666;">
+          <div style="display: flex; justify-content: space-around; margin-bottom: 10px;">
+            <div>
+              <div style="font-weight: bold; color: #333;">Compréhension</div>
+              <div style="font-size: 20px; color: #2196F3;">${data.details_model.comprehension || 0}/10</div>
+            </div>
+            <div>
+              <div style="font-weight: bold; color: #333;">Coopération</div>
+              <div style="font-size: 20px; color: #4CAF50;">${data.details_model.cooperation || 0}/10</div>
+            </div>
+            <div>
+              <div style="font-weight: bold; color: #333;">Progression</div>
+              <div style="font-size: 20px; color: #FF9800;">${data.details_model.progression || 0}/10</div>
+            </div>
+          </div>
+          <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ddd;">
+            <strong>Total modèle:</strong> ${data.details_model.total || 0}/30
+          </div>
         </div>
       ` : ''}
-      <button onclick="this.closest('div').parentElement.remove(); location.reload();" 
-              style="margin-top: 20px; padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">
-        Rejouer
+      
+      <!-- Bouton rejouer -->
+      <button id="maieuthon-replay-btn" onclick="location.reload();" 
+              style="margin-top: 30px; padding: 12px 30px; background: ${scoreColor}; color: white; border: none; border-radius: 25px; cursor: pointer; font-size: 16px; font-weight: bold; transition: transform 0.2s;"
+              onmouseover="this.style.transform='scale(1.05)'"
+              onmouseout="this.style.transform='scale(1)'">
+        🔄 Rejouer
       </button>
     </div>
   `;
   
   document.body.appendChild(modal);
+  
+  // Empêcher fermeture accidentelle
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      // Optionnel : empêcher fermeture en cliquant à l'extérieur
+      // modal.remove();
+    }
+  });
 }
 
 // Intercepter submitQuestion pour scoring
