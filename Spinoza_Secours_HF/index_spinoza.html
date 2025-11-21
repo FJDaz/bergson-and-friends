@@ -556,26 +556,37 @@ function updateDialogueText(userMsg, assistantMsg) {
 
 // Afficher compteur et score
 function updateGameUI() {
-  // Créer ou mettre à jour l'affichage du jeu
-  let gameInfo = document.getElementById('maieuthon-info');
-  if (!gameInfo) {
-    gameInfo = document.createElement('div');
-    gameInfo.id = 'maieuthon-info';
-    gameInfo.style.cssText = 'position: fixed; top: 20px; right: 20px; background: rgba(0,0,0,0.8); color: white; padding: 15px; border-radius: 8px; z-index: 1000; font-family: monospace;';
-    
-    const targetContainer = isMobile ? document.querySelector('.mobile-conversation-content') : document.querySelector('.dialogue');
-    if (targetContainer) {
-      targetContainer.insertBefore(gameInfo, targetContainer.firstChild);
-    } else {
-      document.body.appendChild(gameInfo);
-    }
+  // Desktop
+  const exchangeCountEl = document.getElementById('maieuthon-exchange-count');
+  const scoreValueEl = document.getElementById('maieuthon-score-value');
+  
+  if (exchangeCountEl) {
+    exchangeCountEl.textContent = `Échanges: ${exchangeCount}/${MAX_EXCHANGES}`;
+  }
+  if (scoreValueEl) {
+    const score = Math.max(0, scoreFront);
+    scoreValueEl.textContent = `Score: ${score}`;
+    // Changer couleur selon score
+    if (score >= 80) scoreValueEl.style.color = '#4CAF50'; // Vert
+    else if (score >= 50) scoreValueEl.style.color = '#FF9800'; // Orange
+    else scoreValueEl.style.color = '#F44336'; // Rouge
   }
   
-  gameInfo.innerHTML = `
-    <div style="font-weight: bold; margin-bottom: 5px;">🎮 Maïeuthon</div>
-    <div>Échanges: ${exchangeCount}/${MAX_EXCHANGES}</div>
-    <div>Score: ${Math.max(0, scoreFront)}</div>
-  `;
+  // Mobile
+  const exchangeCountMobileEl = document.getElementById('maieuthon-exchange-count-mobile');
+  const scoreValueMobileEl = document.getElementById('maieuthon-score-value-mobile');
+  
+  if (exchangeCountMobileEl) {
+    exchangeCountMobileEl.textContent = `${exchangeCount}/${MAX_EXCHANGES}`;
+  }
+  if (scoreValueMobileEl) {
+    const score = Math.max(0, scoreFront);
+    scoreValueMobileEl.textContent = score;
+    // Changer couleur selon score
+    if (score >= 80) scoreValueMobileEl.style.color = '#4CAF50';
+    else if (score >= 50) scoreValueMobileEl.style.color = '#FF9800';
+    else scoreValueMobileEl.style.color = '#F44336';
+  }
   
   // Si limite atteinte, déclencher évaluation finale
   if (exchangeCount >= MAX_EXCHANGES) {
