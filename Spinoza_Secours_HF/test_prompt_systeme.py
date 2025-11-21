@@ -226,3 +226,26 @@ if __name__ == "__main__":
     
     print("✅ Tests terminés !")
 
+# =============================================================================
+# UTILISATION DANS COLAB
+# =============================================================================
+
+"""
+ORDRE RECOMMANDÉ DANS COLAB :
+
+1. CELLULE 1 : Installation dépendances
+   !pip install -q ...
+
+2. CELLULE 2 : Imports + Prompt système (ce script)
+   # Copier-coller tout ce script
+   # Exécuter pour tester le prompt AVANT de charger le modèle
+
+3. CELLULE 3 : Chargement modèle
+   model, tokenizer = load_model()
+
+4. CELLULE 4 : API FastAPI + ngrok
+   # Code API avec spinoza_repond() qui utilise le prompt testé
+
+AVANTAGE : Tester le prompt d'abord (rapide) avant de charger le modèle (lent)
+"""
+
