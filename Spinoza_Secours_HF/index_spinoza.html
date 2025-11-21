@@ -225,7 +225,7 @@ async function submitQuestion(userMessage) {
   try {
     // Nettoyer l'historique : enlever les entrées avec null et convertir en strings
     const cleanHistory = conversationHistory
-      .filter(entry => entry[0] !== null && entry[1] !== null)
+      .filter(entry => entry[0] !== null)
       .map(entry => [String(entry[0]), String(entry[1])]);
     
     const response = await fetch(`${API_BASE_URL}/chat`, {
@@ -365,6 +365,283 @@ function escapeHtml(text) {
 
 console.log('💡 Clique sur Spinoza pour démarrer');
 console.log('⌨️  Enter pour envoyer, Shift+Enter pour nouvelle ligne');
+
+// ============================================================================
+// 🎮 MAÏEUTHON - Système de scoring
+// ============================================================================
+
+const MAX_EXCHANGES = 8; // Nombre maximum d'échanges
+let exchangeCount = 0;
+let scoreFront = 100; // Score de base
+let dialogueText = ''; // Texte complet du dialogue pour évaluation
+
+// Mots de résistance (-2 chacun)
+const RESISTANCE_WORDS = [
+  'non', 'mais', 'sauf que', 'je ne suis pas d\'accord', 'pas du tout', 
+  'tu te trompes', 'faux', 'n\'importe quoi', 'absurde', 'incorrect',
+  'erreur', 'désaccord', 'contre', 'refuse', 'rejette'
+];
+
+// Mots de progression (+3 chacun)
+const PROGRESSION_WORDS = [
+  'donc', 'd\'accord', 'je comprends', 'oui', 'alors', 'je vois', 
+  'puisque', 'effectivement', 'exactement', 'voilà', 'c\'est ça',
+  'compris', 'entendu', 'logique', 'évidemment', 'naturellement'
+];
+
+// Phrases méta/interdites
+const FORBIDDEN_PHRASES = [
+  /je casse le jeu/i,
+  /donne.*prompt/i,
+  /prompt/i,
+  /système/i,
+  /modèle/i,
+  /ia|ai|intelligence artificielle/i
+];
+
+// Historique des messages pour détecter répétitions
+let messageHistory = [];
+
+// Fonction de scoring lexical
+function calculateLexicalScore(message) {
+  let score = 0;
+  const msgLower = message.toLowerCase();
+  
+  // Mots de résistance (-2)
+  RESISTANCE_WORDS.forEach(word => {
+    const regex = new RegExp(`\\b${word}\\b`, 'gi');
+    const matches = msgLower.match(regex);
+    if (matches) score -= matches.length * 2;
+  });
+  
+  // Mots de progression (+3)
+  PROGRESSION_WORDS.forEach(word => {
+    const regex = new RegExp(`\\b${word}\\b`, 'gi');
+    const matches = msgLower.match(regex);
+    if (matches) score += matches.length * 3;
+  });
+  
+  return score;
+}
+
+// Score longueur (effort)
+function calculateLengthScore(message) {
+  const len = message.trim().length;
+  if (len < 10) return -5;
+  if (len > 60) return +2;
+  return 0;
+}
+
+// Score cohérence linguistique
+function calculateCoherenceScore(message) {
+  let score = 0;
+  
+  // Mélange fr/en (détection simple)
+  const frenchWords = message.match(/\b(le|la|les|de|du|des|un|une|et|ou|mais|donc|alors)\b/gi);
+  const englishWords = message.match(/\b(the|a|an|and|or|but|so|then|is|are|was|were)\b/gi);
+  if (frenchWords && englishWords && frenchWords.length > 2 && englishWords.length > 2) {
+    score -= 3;
+  }
+  
+  // Fautes grossières (regex simples)
+  const grossErrors = [
+    /(.)\1{4,}/g, // Répétitions de caractères (aaaaa)
+    /[A-Z]{5,}/g, // MAJUSCULES EXCESSIVES
+  ];
+  grossErrors.forEach(regex => {
+    const matches = message.match(regex);
+    if (matches) score -= matches.length;
+  });
+  
+  return score;
+}
+
+// Score répétition
+function calculateRepetitionScore(message) {
+  const msgLower = message.toLowerCase().trim();
+  
+  // Vérifier si message similaire existe déjà (similarité > 80%)
+  for (const prevMsg of messageHistory) {
+    const similarity = calculateSimilarity(msgLower, prevMsg.toLowerCase());
+    if (similarity > 0.8) {
+      return -5;
+    }
+  }
+  
+  messageHistory.push(msgLower);
+  return 0;
+}
+
+// Similarité simple (Jaccard)
+function calculateSimilarity(str1, str2) {
+  const words1 = new Set(str1.split(/\s+/));
+  const words2 = new Set(str2.split(/\s+/));
+  const intersection = new Set([...words1].filter(x => words2.has(x)));
+  const union = new Set([...words1, ...words2]);
+  return intersection.size / union.size;
+}
+
+// Score "jeu correct"
+function calculateFairPlayScore(message) {
+  let score = 0;
+  
+  // Insultes (liste basique)
+  const insults = /(idiot|con|crétin|débile|abruti|imbécile)/i;
+  if (insults.test(message)) score -= 10;
+  
+  // Phrases méta/interdites
+  FORBIDDEN_PHRASES.forEach(regex => {
+    if (regex.test(message)) {
+      if (regex.source.includes('prompt')) score -= 10;
+      else score -= 15;
+    }
+  });
+  
+  return score;
+}
+
+// Calculer score total pour un message
+function calculateMessageScore(message) {
+  const lexical = calculateLexicalScore(message);
+  const length = calculateLengthScore(message);
+  const coherence = calculateCoherenceScore(message);
+  const repetition = calculateRepetitionScore(message);
+  const fairPlay = calculateFairPlayScore(message);
+  
+  const total = lexical + length + coherence + repetition + fairPlay;
+  
+  console.log(`[SCORE] Message: "${message.substring(0, 30)}..."`);
+  console.log(`[SCORE] Lexical: ${lexical}, Length: ${length}, Coherence: ${coherence}, Repetition: ${repetition}, FairPlay: ${fairPlay}`);
+  console.log(`[SCORE] Modif: ${total}, Score actuel: ${scoreFront} → ${scoreFront + total}`);
+  
+  return total;
+}
+
+// Mettre à jour le dialogue text
+function updateDialogueText(userMsg, assistantMsg) {
+  dialogueText += `\nÉlève: ${userMsg}\nSpinoza: ${assistantMsg}\n`;
+}
+
+// Afficher compteur et score
+function updateGameUI() {
+  // Créer ou mettre à jour l'affichage du jeu
+  let gameInfo = document.getElementById('maieuthon-info');
+  if (!gameInfo) {
+    gameInfo = document.createElement('div');
+    gameInfo.id = 'maieuthon-info';
+    gameInfo.style.cssText = 'position: fixed; top: 20px; right: 20px; background: rgba(0,0,0,0.8); color: white; padding: 15px; border-radius: 8px; z-index: 1000; font-family: monospace;';
+    
+    const targetContainer = isMobile ? document.querySelector('.mobile-conversation-content') : document.querySelector('.dialogue');
+    if (targetContainer) {
+      targetContainer.insertBefore(gameInfo, targetContainer.firstChild);
+    } else {
+      document.body.appendChild(gameInfo);
+    }
+  }
+  
+  gameInfo.innerHTML = `
+    <div style="font-weight: bold; margin-bottom: 5px;">🎮 Maïeuthon</div>
+    <div>Échanges: ${exchangeCount}/${MAX_EXCHANGES}</div>
+    <div>Score: ${Math.max(0, scoreFront)}</div>
+  `;
+  
+  // Si limite atteinte, déclencher évaluation finale
+  if (exchangeCount >= MAX_EXCHANGES) {
+    endGame();
+  }
+}
+
+// Fin du jeu - évaluation finale
+async function endGame() {
+  console.log('[MAÏEUTHON] Fin du jeu - Évaluation finale');
+  console.log(`[MAÏEUTHON] Score front: ${scoreFront}`);
+  console.log(`[MAÏEUTHON] Dialogue:\n${dialogueText}`);
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/evaluate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true'
+      },
+      body: JSON.stringify({
+        dialogue: dialogueText,
+        score_front: scoreFront
+      })
+    });
+    
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    
+    const data = await response.json();
+    console.log('[MAÏEUTHON] ✅ Évaluation reçue:', data);
+    
+    // Afficher résultat final
+    showFinalResult(data);
+    
+  } catch (error) {
+    console.error('[MAÏEUTHON] ❌ Erreur évaluation:', error);
+    alert(`Erreur évaluation: ${error.message}`);
+  }
+}
+
+// Afficher résultat final
+function showFinalResult(data) {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: flex; align-items: center; justify-content: center;';
+  
+  modal.innerHTML = `
+    <div style="background: white; padding: 30px; border-radius: 10px; max-width: 600px; text-align: center;">
+      <h2 style="color: #333; margin-bottom: 20px;">🎓 Résultat du Maïeuthon</h2>
+      <div style="font-size: 48px; font-weight: bold; color: #4CAF50; margin: 20px 0;">
+        ${data.score_final || scoreFront}/100
+      </div>
+      <div style="margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 5px; font-style: italic;">
+        ${data.message_final || 'Merci pour ce dialogue.'}
+      </div>
+      ${data.details_model ? `
+        <div style="margin-top: 20px; font-size: 12px; color: #666;">
+          Compréhension: ${data.details_model.comprehension}/10<br>
+          Coopération: ${data.details_model.cooperation}/10<br>
+          Progression: ${data.details_model.progression}/10
+        </div>
+      ` : ''}
+      <button onclick="this.closest('div').parentElement.remove(); location.reload();" 
+              style="margin-top: 20px; padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">
+        Rejouer
+      </button>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+}
+
+// Intégration dans submitQuestion existante
+const originalSubmitQuestion = submitQuestion;
+submitQuestion = async function(userMessage) {
+  // Calculer score avant envoi
+  const messageScore = calculateMessageScore(userMessage);
+  scoreFront += messageScore;
+  exchangeCount++;
+  
+  // Mettre à jour UI
+  updateGameUI();
+  
+  // Appel original
+  const result = await originalSubmitQuestion(userMessage);
+  
+  // Mettre à jour dialogue text après réponse
+  if (conversationHistory.length > 0) {
+    const lastExchange = conversationHistory[conversationHistory.length - 1];
+    if (lastExchange[0] && lastExchange[1]) {
+      updateDialogueText(lastExchange[0], lastExchange[1]);
+    }
+  }
+  
+  return result;
+};
+
+// Initialiser UI au démarrage
+updateGameUI();
 </script>
 
 </body>
